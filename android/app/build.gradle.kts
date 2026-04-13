@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.antigravity.firstsync_antigravity_stitch"
+    namespace = "com.antigravity.AI_Discount_Calculator"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 

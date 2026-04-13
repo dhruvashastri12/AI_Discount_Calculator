@@ -1,3 +1,3 @@
-# firstsync_antigravity_stitch
+# AI_Discount_Calculator
 
 A new Flutter project.
