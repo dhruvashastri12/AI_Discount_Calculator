@@ -9,19 +9,16 @@ class AppTheme {
   static ThemeData get darkTheme {
     return ThemeData(
       brightness: Brightness.dark,
-      scaffoldBackgroundColor: AppColors.background,
-      primaryColor: AppColors.primaryCalc,
+      scaffoldBackgroundColor: AppColors.backgroundDark,
+      primaryColor: AppColors.primaryGreen,
       colorScheme: const ColorScheme.dark(
-        primary: AppColors.primaryCalc,
-        secondary: AppColors.primaryCalc,
-        surface: AppColors.surface,
+        primary: AppColors.primaryGreen,
+        secondary: AppColors.primaryGreen,
+        surface: AppColors.cardDark,
         onSurface: AppColors.white,
       ),
       useMaterial3: true,
-      
-      // Using Space Grotesk for a modern, tech-focused look in dark mode
-      textTheme: GoogleFonts.spaceGroteskTextTheme(ThemeData.dark().textTheme),
-      fontFamily: GoogleFonts.spaceGrotesk().fontFamily,
+      textTheme: GoogleFonts.dmSansTextTheme(ThemeData.dark().textTheme),
     );
   }
 
@@ -29,19 +26,16 @@ class AppTheme {
   static ThemeData get lightTheme {
     return ThemeData(
       brightness: Brightness.light,
-      scaffoldBackgroundColor: AppColors.backgroundLight,
-      primaryColor: AppColors.primaryList,
+      scaffoldBackgroundColor: AppColors.background,
+      primaryColor: AppColors.primaryGreen,
       colorScheme: const ColorScheme.light(
-        primary: AppColors.primaryList,
-        secondary: AppColors.primaryList,
+        primary: AppColors.primaryGreen,
+        secondary: AppColors.primaryGreen,
         surface: AppColors.white,
         onSurface: AppColors.textDark,
       ),
       useMaterial3: true,
-      
-      // Using Public Sans for high readability in light mode
-      textTheme: GoogleFonts.publicSansTextTheme(ThemeData.light().textTheme),
-      fontFamily: GoogleFonts.publicSans().fontFamily,
+      textTheme: GoogleFonts.dmSansTextTheme(ThemeData.light().textTheme),
     );
   }
 }

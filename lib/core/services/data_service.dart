@@ -2,394 +2,137 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/cart_item.dart';
-import '../models/category_group.dart';
 import '../constants/app_constants.dart';
 
-/// Service responsible for managing shopping list data and history.
-/// Follows the Singleton pattern to ensure data consistency across the app.
 class DataService extends ChangeNotifier {
   static final DataService _instance = DataService._internal();
   factory DataService() => _instance;
   DataService._internal();
 
-  // Observable state for UI updates
-  List<CartItem> _currentItems = [];
-  List<CategoryGroup> _categories = [];
-  List<Map<String, dynamic>> _historyData = [];
+  List<CartItem> _allItems = [];
+  
+  double _storeThreshold = 0;
+  double _storePercentage = 0;
 
-  List<CartItem> get currentItems => _currentItems;
-  List<CategoryGroup> get categories => _categories;
-  List<Map<String, dynamic>> get historyData => _historyData;
+  double get storeThreshold => _storeThreshold;
+  double get storePercentage => _storePercentage;
 
-  /// Initializes the service by loading stored data and checking for date changes.
   Future<void> init() async {
     final prefs = await SharedPreferences.getInstance();
     
-    // Load current items from persistent storage
     final currentStr = prefs.getString(AppConstants.keyCurrentItems) ?? '[]';
     final List decodedCurrent = jsonDecode(currentStr);
-    _currentItems = decodedCurrent.map((e) => CartItem.fromJson(e)).toList();
+    _allItems = decodedCurrent.map((e) => CartItem.fromJson(e)).toList();
 
-    // Load categories
-    final categoriesStr = prefs.getString('categories_data') ?? '[]';
-    final List decodedCategories = jsonDecode(categoriesStr);
-    _categories = decodedCategories.map((e) => CategoryGroup.fromJson(e)).toList();
+    _storeThreshold = prefs.getDouble('storeThreshold') ?? 0;
+    _storePercentage = prefs.getDouble('storePercentage') ?? 0;
 
-    if (_categories.isEmpty) {
-      _categories = [
-        CategoryGroup(id: 'veggies', name: 'Veggies'),
-        CategoryGroup(id: 'milk', name: 'Milk'),
-        CategoryGroup(id: 'grocery', name: 'Grocery'),
-        CategoryGroup(id: 'others', name: 'Others'),
-      ];
-      _saveCategories();
-    }
-
-    // Load history data from persistent storage
-    final historyStr = prefs.getString(AppConstants.keyHistoryData) ?? '[]';
-    final List decodedHistory = jsonDecode(historyStr);
-    _historyData = List<Map<String, dynamic>>.from(decodedHistory);
-    
-    // Ensure history is correctly sorted: Date (Desc) then Total (Desc)
-    _sortHistory();
-    
-    // Rule: If today's items are not present then only previous one day's items should be shown.
-    _handleListingLogic();
-
-    // Check if we need to seed dummy data for testing
-    if (_currentItems.isEmpty && _historyData.isEmpty) {
-      _seedDummyData();
-    }
-    
     notifyListeners();
   }
 
-  /// Ensures the current list only shows today's items, or the most recent day's items if today is empty.
-  void _handleListingLogic() {
-    if (_currentItems.isEmpty) {
-      // If empty, try to pull the absolute most recent day from history
-      if (_historyData.isNotEmpty) {
-        final lastHistoryDay = _historyData.first;
-        final List details = lastHistoryDay['details'];
-        _currentItems = details.map((e) => CartItem.fromJson(Map<String, dynamic>.from(e))).toList();
+  /// Returns items for the most recent date that has entries, or empty list.
+  /// If today has items, returns today's items.
+  /// Newest items at the top.
+  List<CartItem> get currentItems {
+    if (_allItems.isEmpty) return [];
+
+    // Find the most recent date available in the list
+    List<CartItem> sortedAll = List.from(_allItems);
+    sortedAll.sort((a, b) {
+      int comp = b.date.compareTo(a.date);
+      if (comp == 0) {
+        // If same date, newest on top (assuming IDs are sequential or just use index)
+        // For simplicity, let's just stick to the order they were added if same date
+        return 0; 
       }
-      return;
-    }
-
-    final now = DateTime.now();
-    final bool hasToday = _currentItems.any((item) => 
-      item.date.year == now.year && item.date.month == now.month && item.date.day == now.day);
-
-    if (hasToday) {
-      _archiveNonTodayItems();
-    } else {
-      _currentItems.sort((a, b) => b.date.compareTo(a.date));
-      final mostRecentDate = _currentItems.first.date;
-      
-      final recentDayItems = _currentItems.where((item) => 
-        item.date.year == mostRecentDate.year && 
-        item.date.month == mostRecentDate.month && 
-        item.date.day == mostRecentDate.day).toList();
-      
-      final olderItems = _currentItems.where((item) => !recentDayItems.contains(item)).toList();
-      
-      if (olderItems.isNotEmpty) {
-        _archiveItemsToHistory(olderItems);
-        _currentItems = recentDayItems;
-      }
-    }
-  }
-
-  /// Seeds dummy data for testing purposes.
-  void _seedDummyData() {
-    final yesterday = DateTime.now().subtract(const Duration(days: 1));
-    
-    _currentItems = [
-      CartItem(
-        id: 'seed_curr_1',
-        title: 'Organic Eggs',
-        qty: '12 pcs',
-        price: 180.0,
-        originalPrice: 200.0,
-        discountLabel: '10% OFF',
-        iconCode: Icons.egg_outlined.codePoint,
-        date: DateTime.now(),
-        priceMode: PriceMode.flat,
-        categoryId: 'grocery',
-        discountType: DiscountType.percentage,
-        discountValue: 10,
-        unitPrice: 200,
-        rawQty: 1,
-        unit: 'pcs',
-      ),
-      CartItem(
-        id: 'seed_curr_2',
-        title: 'Tomatoes',
-        qty: '500 g',
-        price: 35.0,
-        originalPrice: 35.0,
-        iconCode: Icons.shopping_basket_outlined.codePoint,
-        date: DateTime.now(),
-        priceMode: PriceMode.perUnit,
-        categoryId: 'veggies',
-        discountType: DiscountType.amount,
-        discountValue: 0,
-        unitPrice: 70,
-        rawQty: 500,
-        unit: 'g',
-      ),
-    ];
-
-    _saveCurrent();
-    _saveCategories();
-  }
-
-  Future<void> _saveCategories() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('categories_data', jsonEncode(_categories.map((e) => e.toJson()).toList()));
-  }
-
-  void updateCategoryGroup(CategoryGroup updatedCategory) {
-    final index = _categories.indexWhere((c) => c.id == updatedCategory.id);
-    if (index != -1) {
-      _categories[index] = updatedCategory;
-      _saveCategories();
-      notifyListeners();
-    }
-  }
-
-  CategoryGroup getCategoryById(String id) {
-    return _categories.firstWhere((c) => c.id == id, orElse: () => CategoryGroup(id: 'others', name: 'Others'));
-  }
-
-  // Summary logic calculations
-  double get totalItemsSubtotal => _currentItems.fold(0, (sum, item) => sum + (item.originalPrice ?? item.price));
-  double get totalItemDiscounts => _currentItems.fold(0, (sum, item) => sum + ((item.originalPrice ?? item.price) - item.price));
-  
-  double get totalVendorRoundOffs {
-    double total = 0;
-    final grouped = groupItemsByCategory();
-    grouped.forEach((categoryId, items) {
-      final category = getCategoryById(categoryId);
-      total += category.vendorRoundOff;
+      return comp;
     });
-    return total;
+
+    DateTime latestDate = sortedAll.first.date;
+    DateTime latestDay = DateTime(latestDate.year, latestDate.month, latestDate.day);
+
+    // Filter items belonging to that latest day
+    return sortedAll.where((item) {
+      DateTime itemDay = DateTime(item.date.year, item.date.month, item.date.day);
+      return itemDay.isAtSameMomentAs(latestDay);
+    }).toList();
   }
 
-  double get totalStoreOffers {
-    double total = 0;
-    final grouped = groupItemsByCategory();
-    grouped.forEach((categoryId, items) {
-      final category = getCategoryById(categoryId);
-      if (category.storeOfferPercent > 0) {
-        double categorySubtotal = items.fold(0, (sum, it) => sum + it.price);
-        double afterRoundOff = categorySubtotal - category.vendorRoundOff;
-        total += afterRoundOff * (category.storeOfferPercent / 100);
-      }
-    });
-    return total;
-  }
-
-  double get finalTotalValue => totalItemsSubtotal - totalItemDiscounts - totalVendorRoundOffs - totalStoreOffers;
-
-  Map<String, List<CartItem>> groupItemsByCategory() {
-    Map<String, List<CartItem>> grouped = {};
-    for (var item in _currentItems) {
-      grouped.putIfAbsent(item.categoryId, () => []).add(item);
+  /// Get all history grouped by date
+  Map<DateTime, List<CartItem>> get historyByDate {
+    Map<DateTime, List<CartItem>> grouped = {};
+    for (var item in _allItems) {
+      DateTime day = DateTime(item.date.year, item.date.month, item.date.day);
+      grouped.putIfAbsent(day, () => []).add(item);
     }
     return grouped;
   }
 
+  void setStoreOffer(double threshold, double percentage) async {
+    _storeThreshold = threshold;
+    _storePercentage = percentage;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setDouble('storeThreshold', threshold);
+    await prefs.setDouble('storePercentage', percentage);
+    notifyListeners();
+  }
+
+  double get subtotal => currentItems.fold(0, (sum, it) => sum + it.subtotal);
+  
+  double get totalSavings {
+    double itemSavings = currentItems.fold(0, (sum, it) => sum + (it.subtotal - it.itemFinalPrice));
+    double vendorSavings = currentItems.fold(0, (sum, it) => sum + it.vendorDiscountAmount);
+    return itemSavings + vendorSavings + storeDiscountAmount;
+  }
+
+  double get totalBeforeStoreOffer => currentItems.fold(0, (sum, it) => sum + it.itemAfterVendorDiscount);
+
+  double get storeDiscountAmount {
+    if (_storeThreshold > 0 && totalBeforeStoreOffer >= _storeThreshold) {
+      return totalBeforeStoreOffer * (_storePercentage / 100);
+    }
+    return 0;
+  }
+
+  double get finalTotalValue => totalBeforeStoreOffer - storeDiscountAmount;
+
+  double get allTimeExpense => _allItems.fold(0, (sum, it) => sum + it.itemAfterVendorDiscount);
+  
+  double get allTimeSavings => _allItems.fold(0, (sum, it) => sum + it.totalSavings);
+
   void addItem(CartItem item) {
-    final now = DateTime.now();
-    final bool isToday = item.date.year == now.year && item.date.month == now.month && item.date.day == now.day;
-    
-    if (isToday) {
-      _archiveNonTodayItems();
-      _currentItems.insert(0, item);
-    } else {
-      final hasTodayItems = _currentItems.any((it) => 
-        it.date.year == now.year && it.date.month == now.month && it.date.day == now.day);
-
-      if (hasTodayItems) {
-        _archiveItemsToHistory([item]);
-      } else {
-        _currentItems.insert(0, item);
-      }
-    }
-    
-    _saveCurrent();
+    // Insert at start for descending order in same-date scenarios if needed
+    _allItems.insert(0, item);
+    _saveAll();
     notifyListeners();
   }
 
-  void _archiveNonTodayItems() {
-    if (_currentItems.isEmpty) return;
-    
-    final now = DateTime.now();
-    List<CartItem> notToday = _currentItems.where((item) => 
-      !(item.date.year == now.year && item.date.month == now.month && item.date.day == now.day)
-    ).toList();
-
-    if (notToday.isNotEmpty) {
-      _archiveItemsToHistory(notToday);
-      _currentItems.removeWhere((item) => notToday.contains(item));
-    }
-  }
-
-  void _archiveItemsToHistory(List<CartItem> items) {
-     Map<String, List<CartItem>> grouped = {};
-     for (var item in items) {
-       final d = DateTime(item.date.year, item.date.month, item.date.day).toIso8601String();
-       grouped.putIfAbsent(d, () => []).add(item);
-     }
-
-     grouped.forEach((dateStr, dateItems) {
-       final existingDayIdx = _historyData.indexWhere((day) => day['date'] == dateStr);
-       double dayTotal = dateItems.fold(0.0, (sum, it) => sum + it.price);
-       
-       if (existingDayIdx != -1) {
-         final List details = List.from(_historyData[existingDayIdx]['details']);
-         details.addAll(dateItems.map((e) => e.toJson()));
-         _historyData[existingDayIdx]['details'] = details;
-         _historyData[existingDayIdx]['items_count'] = details.length;
-         _historyData[existingDayIdx]['total'] = (_historyData[existingDayIdx]['total'] as num).toDouble() + dayTotal;
-       } else {
-         _historyData.add({
-           'date': dateStr,
-           'total': dayTotal,
-           'items_count': dateItems.length,
-           'details': dateItems.map((e) => e.toJson()).toList(),
-         });
-       }
-     });
-     _sortHistory();
-     _saveHistory();
-  }
-
-  Future<void> removeItem(String id, {bool alsoFromHistory = false}) async {
-    _currentItems.removeWhere((item) => item.id == id);
-    if (alsoFromHistory) {
-      _removeItemFromHistoryData(id);
-    }
-    await _saveCurrent();
-    await _saveHistory();
+  void removeItem(String id) {
+    _allItems.removeWhere((it) => it.id == id);
+    _saveAll();
     notifyListeners();
   }
 
-  void updateItem(CartItem updatedItem, {bool alsoInHistory = true}) {
-    final index = _currentItems.indexWhere((item) => item.id == updatedItem.id);
-    if (index != -1) {
-      _currentItems[index] = updatedItem;
-      _handleListingLogic();
-      _saveCurrent();
-    } else {
-      final now = DateTime.now();
-      if (updatedItem.date.year == now.year && updatedItem.date.month == now.month && updatedItem.date.day == now.day) {
-        _currentItems.insert(0, updatedItem);
-        _handleListingLogic();
-        _saveCurrent();
-      }
-    }
-
-    if (alsoInHistory) {
-      _updateItemInHistoryData(updatedItem);
-      _saveHistory();
-    }
-    notifyListeners();
-  }
-
-  bool checkItemInHistory(String id) {
-    for (var day in _historyData) {
-      final List details = day['details'];
-      for (var item in details) {
-        if (item is Map && item['id'] == id) return true;
-      }
-    }
-    return false;
-  }
-
-  void _removeItemFromHistoryData(String id) {
-    for (var i = 0; i < _historyData.length; i++) {
-       final List details = List.from(_historyData[i]['details']);
-       final int originalLen = details.length;
-       details.removeWhere((item) => item is Map && item['id'] == id);
-       
-       if (details.length != originalLen) {
-         _historyData[i]['details'] = details;
-         _historyData[i]['items_count'] = details.length;
-         double dailyTotal = details.fold(0.0, (sum, it) => sum + (it['price'] as num).toDouble());
-         _historyData[i]['total'] = dailyTotal;
-       }
-    }
-    _historyData.removeWhere((day) => day['items_count'] == 0);
-  }
-
-  void _updateItemInHistoryData(CartItem updatedItem) {
-    for (var i = 0; i < _historyData.length; i++) {
-       final List details = List.from(_historyData[i]['details']);
-       bool dayChanged = false;
-       for (var j = 0; j < details.length; j++) {
-         if (details[j] is Map && details[j]['id'] == updatedItem.id) {
-           details[j] = updatedItem.toJson();
-           dayChanged = true;
-         }
-       }
-       if (dayChanged) {
-         _historyData[i]['details'] = details;
-         double dailyTotal = details.fold(0.0, (sum, it) => sum + (it['price'] as num).toDouble());
-         _historyData[i]['total'] = dailyTotal;
-       }
+  void updateItem(CartItem item) {
+    int idx = _allItems.indexWhere((it) => it.id == item.id);
+    if (idx != -1) {
+      _allItems[idx] = item;
+      _saveAll();
+      notifyListeners();
     }
   }
 
-  Future<void> clearCurrentAndAddToHistory({DateTime? archiveDate}) async {
-    if (_currentItems.isEmpty) return;
-    final double total = _currentItems.fold(0.0, (sum, item) => sum + item.price);
-    _historyData.add({
-      'date': (archiveDate ?? DateTime.now()).toIso8601String(),
-      'total': total,
-      'items_count': _currentItems.length,
-      'details': _currentItems.map((e) => e.toJson()).toList(),
-    });
-    _sortHistory();
-    _currentItems.clear();
-    await _saveCurrent();
-    await _saveHistory();
-    notifyListeners();
-  }
-
-  void _sortHistory() {
-    _historyData.sort((a, b) {
-      final dateA = DateTime.parse(a['date']);
-      final dateB = DateTime.parse(b['date']);
-      int dateCompare = dateB.compareTo(dateA);
-      if (dateCompare != 0) return dateCompare;
-      final totalA = (a['total'] as num).toDouble();
-      final totalB = (b['total'] as num).toDouble();
-      return totalB.compareTo(totalA);
-    });
-  }
-
-  Future<void> _saveCurrent() async {
+  Future<void> _saveAll() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(AppConstants.keyCurrentItems, jsonEncode(_currentItems.map((e) => e.toJson()).toList()));
+    await prefs.setString(AppConstants.keyCurrentItems, jsonEncode(_allItems.map((e) => e.toJson()).toList()));
   }
 
-  Future<void> _saveHistory() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(AppConstants.keyHistoryData, jsonEncode(_historyData));
-  }
-
-  double getMonthlyTotal() {
-    double total = 0;
-    final now = DateTime.now();
-    for (var record in _historyData) {
-      final date = DateTime.parse(record['date']);
-      if (date.month == now.month && date.year == now.year) {
-        total += (record['total'] as num).toDouble();
-      }
+  Map<String, List<CartItem>> groupItemsByCategory(List<CartItem> items) {
+    Map<String, List<CartItem>> grouped = {};
+    for (var item in items) {
+      grouped.putIfAbsent(item.categoryId, () => []).add(item);
     }
-    return total;
+    return grouped;
   }
 }
 
