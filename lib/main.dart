@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'core/theme/app_theme.dart';
-import 'features/main_navigation/presentation/screens/splash_screen.dart';
+import 'features/main_navigation/presentation/screens/main_navigation_screen.dart';
 import 'core/services/data_service.dart';
 import 'core/constants/app_strings.dart';
 
@@ -37,8 +37,8 @@ class AntigravityFirstSyncApp extends StatelessWidget {
           darkTheme: AppTheme.darkTheme,
           themeMode: currentMode,
 
-          // Set splash screen as the root screen
-          home: const SplashScreen(),
+          // Set main navigation screen as the root screen
+          home: const MainNavigationScreen(),
 
           // Remove debug banner for a cleaner premium look
           debugShowCheckedModeBanner: false,

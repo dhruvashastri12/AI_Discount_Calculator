@@ -6,7 +6,6 @@ import '../../../../core/models/cart_item.dart';
 import '../../../../core/services/data_service.dart';
 import '../widgets/add_item_modal.dart';
 import '../widgets/item_card.dart';
-import 'day_summary_screen.dart';
 
 class ShoppingListScreen extends StatefulWidget {
   const ShoppingListScreen({super.key});
@@ -41,7 +40,9 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       useSafeArea: true,
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
-        constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.8),
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.8,
+        ),
         child: AddItemModal(
           editItem: editItem,
           onItemAdded: (item) {
@@ -59,38 +60,78 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
   Future<void> _showDeleteConfirmation(CartItem item) async {
     DateTime now = DateTime.now();
     DateTime today = DateTime(now.year, now.month, now.day);
-    DateTime itemDate = DateTime(item.date.year, item.date.month, item.date.day);
+    DateTime itemDate = DateTime(
+      item.date.year,
+      item.date.month,
+      item.date.day,
+    );
     bool isPastDate = itemDate.isBefore(today);
 
     bool? deleteConfirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Confirm Delete', style: GoogleFonts.dmSans(fontWeight: FontWeight.bold)),
-        content: Text('Are you sure you want to delete this item?\n\nDeleted entries cant be retrived back.', style: GoogleFonts.dmSans()),
+        title: Text(
+          'Confirm Delete',
+          style: GoogleFonts.dmSans(fontWeight: FontWeight.bold),
+        ),
+        content: Text(
+          'Are you sure you want to delete this item?\n\nDeleted entries cant be retrived back.',
+          style: GoogleFonts.dmSans(),
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: Text('No, Keep it', style: GoogleFonts.dmSans(color: Colors.grey))),
-          TextButton(onPressed: () => Navigator.pop(context, true), child: Text('Yes, Delete', style: GoogleFonts.dmSans(color: Colors.red))),
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(
+              'No, Keep it',
+              style: GoogleFonts.dmSans(color: Colors.grey),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(
+              'Yes, Delete',
+              style: GoogleFonts.dmSans(color: Colors.red),
+            ),
+          ),
         ],
       ),
     );
 
     if (deleteConfirmed != true) return;
-    
+
     if (!mounted) return;
 
     if (isPastDate) {
       bool? deleteFromHistory = await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
-          title: Text('Delete from History?', style: GoogleFonts.dmSans(fontWeight: FontWeight.bold)),
-          content: Text('Do you also want to delete the entry from History tab?\n\nDeleted entries cant be retrived back.', style: GoogleFonts.dmSans()),
+          title: Text(
+            'Delete from History?',
+            style: GoogleFonts.dmSans(fontWeight: FontWeight.bold),
+          ),
+          content: Text(
+            'Do you also want to delete the entry from History tab?\n\nDeleted entries cant be retrived back.',
+            style: GoogleFonts.dmSans(),
+          ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(context, false), child: Text('No, Keep it', style: GoogleFonts.dmSans(color: Colors.grey))),
-            TextButton(onPressed: () => Navigator.pop(context, true), child: Text('Yes, Delete', style: GoogleFonts.dmSans(color: Colors.red))),
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: Text(
+                'No, Keep it',
+                style: GoogleFonts.dmSans(color: Colors.grey),
+              ),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: Text(
+                'Yes, Delete',
+                style: GoogleFonts.dmSans(color: Colors.red),
+              ),
+            ),
           ],
         ),
       );
-      
+
       if (deleteFromHistory == true) {
         if (mounted) dataService.removeItem(item.id);
       }
@@ -103,7 +144,9 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
   Widget build(BuildContext context) {
     bool isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: isDark ? AppColors.backgroundDark : const Color(0xFFF7F8FA),
+      backgroundColor: isDark
+          ? AppColors.backgroundDark
+          : const Color(0xFFF7F8FA),
       body: SafeArea(
         child: Column(
           children: [
@@ -129,7 +172,9 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     final double subtotal = dataService.subtotal;
     final double savings = dataService.totalSavings;
     final double finalTotal = dataService.finalTotalValue;
-    final int savingsPercent = subtotal > 0 ? ((savings / subtotal) * 100).round() : 0;
+    final int savingsPercent = subtotal > 0
+        ? ((savings / subtotal) * 100).round()
+        : 0;
 
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
@@ -137,7 +182,15 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(20),
-        boxShadow: isDark ? null : [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4))],
+        boxShadow: isDark
+            ? null
+            : [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
       ),
       child: Column(
         children: [
@@ -148,17 +201,39 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('SUBTOTAL & SAVINGS', style: GoogleFonts.dmSans(fontSize: 9, fontWeight: FontWeight.w900, color: AppColors.neutralText, letterSpacing: 1.0)),
+                    Text(
+                      'SUBTOTAL & SAVINGS',
+                      style: GoogleFonts.dmSans(
+                        fontSize: 9,
+                        fontWeight: FontWeight.w900,
+                        color: AppColors.neutralText,
+                        letterSpacing: 1.0,
+                      ),
+                    ),
                     const SizedBox(height: 4),
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        Text('₹${subtotal.toStringAsFixed(0)}', style: GoogleFonts.jetBrainsMono(fontSize: 20, fontWeight: FontWeight.w900, color: AppColors.textDark)),
+                        Text(
+                          '₹${subtotal.toStringAsFixed(0)}',
+                          style: GoogleFonts.jetBrainsMono(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w900,
+                            color: AppColors.textDark,
+                          ),
+                        ),
                         const SizedBox(width: 4),
                         if (savings > 0)
                           Padding(
                             padding: const EdgeInsets.only(bottom: 2),
-                            child: Text('-₹${savings.toStringAsFixed(0)}', style: GoogleFonts.jetBrainsMono(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.primaryGreen)),
+                            child: Text(
+                              '-₹${savings.toStringAsFixed(0)}',
+                              style: GoogleFonts.jetBrainsMono(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.primaryGreen,
+                              ),
+                            ),
                           ),
                       ],
                     ),
@@ -170,9 +245,24 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Text('FINAL TOTAL', style: GoogleFonts.dmSans(fontSize: 9, fontWeight: FontWeight.w900, color: AppColors.neutralText, letterSpacing: 1.0)),
+                  Text(
+                    'FINAL TOTAL',
+                    style: GoogleFonts.dmSans(
+                      fontSize: 9,
+                      fontWeight: FontWeight.w900,
+                      color: AppColors.neutralText,
+                      letterSpacing: 1.0,
+                    ),
+                  ),
                   const SizedBox(height: 2),
-                  Text('₹${finalTotal.toStringAsFixed(0)}', style: GoogleFonts.jetBrainsMono(fontSize: 24, fontWeight: FontWeight.w900, color: AppColors.primaryGreen)),
+                  Text(
+                    '₹${finalTotal.toStringAsFixed(0)}',
+                    style: GoogleFonts.jetBrainsMono(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w900,
+                      color: AppColors.primaryGreen,
+                    ),
+                  ),
                 ],
               ),
             ],
@@ -186,14 +276,38 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
             ),
             child: Row(
               children: [
-                const Icon(Icons.auto_awesome, color: AppColors.primaryGreen, size: 14),
+                const Icon(
+                  Icons.auto_awesome,
+                  color: AppColors.primaryGreen,
+                  size: 14,
+                ),
                 const SizedBox(width: 6),
-                Text('Saved ₹${savings.toStringAsFixed(0)} today', style: GoogleFonts.dmSans(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.primaryGreen)),
+                Text(
+                  'Saved ₹${savings.toStringAsFixed(0)} today',
+                  style: GoogleFonts.dmSans(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primaryGreen,
+                  ),
+                ),
                 const Spacer(),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                  decoration: BoxDecoration(color: AppColors.primaryGreen, borderRadius: BorderRadius.circular(8)),
-                  child: Text('$savingsPercent%', style: GoogleFonts.jetBrainsMono(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w900)),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryGreen,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    '$savingsPercent%',
+                    style: GoogleFonts.jetBrainsMono(
+                      color: Colors.white,
+                      fontSize: 9,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -208,9 +322,16 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.shopping_cart_outlined, size: 80, color: Colors.grey.withValues(alpha: 0.3)),
+          Icon(
+            Icons.shopping_cart_outlined,
+            size: 80,
+            color: Colors.grey.withValues(alpha: 0.3),
+          ),
           const SizedBox(height: 16),
-          Text('Nothing in your list for this date.', style: GoogleFonts.dmSans(fontSize: 16, color: Colors.grey)),
+          Text(
+            'Nothing in your list for this date.',
+            style: GoogleFonts.dmSans(fontSize: 16, color: Colors.grey),
+          ),
         ],
       ),
     );
@@ -234,9 +355,23 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
             child: Align(
               alignment: Alignment.centerLeft,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(color: Colors.grey[200], borderRadius: BorderRadius.circular(8)),
-                child: Text(dateStr, style: GoogleFonts.dmSans(fontSize: 10, fontWeight: FontWeight.w900, color: Colors.grey[600], letterSpacing: 0.5)),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.grey[200],
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  dateStr,
+                  style: GoogleFonts.dmSans(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.grey[600],
+                    letterSpacing: 0.5,
+                  ),
+                ),
               ),
             ),
           );
@@ -244,20 +379,29 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
 
         final categoryId = groups.keys.elementAt(index - 1);
         final items = groups[categoryId]!;
-        final catSubtotal = items.fold(0.0, (sum, it) => sum + it.itemAfterVendorDiscount);
-        
+        final catSubtotal = items.fold(
+          0.0,
+          (sum, it) => sum + it.itemAfterVendorDiscount,
+        );
+
         return Column(
           children: [
             _buildCategoryHeader(categoryId, catSubtotal, items.length),
             const SizedBox(height: 12),
-            ...items.map((item) => ItemCard(
-              item: item,
-              isExpanded: _expandedItemId == item.id,
-              onToggle: () => setState(() => _expandedItemId = _expandedItemId == item.id ? null : item.id),
-              onEdit: () => _showAddModal(editItem: item),
-              onDelete: () => _showDeleteConfirmation(item),
-              showDate: false,
-            )),
+            ...items.map(
+              (item) => ItemCard(
+                item: item,
+                isExpanded: _expandedItemId == item.id,
+                onToggle: () => setState(
+                  () => _expandedItemId = _expandedItemId == item.id
+                      ? null
+                      : item.id,
+                ),
+                onEdit: () => _showAddModal(editItem: item),
+                onDelete: () => _showDeleteConfirmation(item),
+                showDate: false,
+              ),
+            ),
             const SizedBox(height: 12),
           ],
         );
@@ -269,20 +413,47 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     return Row(
       children: [
         Container(
-           padding: const EdgeInsets.all(8),
-           decoration: BoxDecoration(color: const Color(0xFFE3F2FD), borderRadius: BorderRadius.circular(10)),
-           child: Text(_getEmojiForCategory(name), style: const TextStyle(fontSize: 16)),
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: const Color(0xFFE3F2FD),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Text(
+            _getEmojiForCategory(name),
+            style: const TextStyle(fontSize: 16),
+          ),
         ),
         const SizedBox(width: 12),
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(name.toUpperCase(), style: GoogleFonts.dmSans(fontSize: 12, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
-            Text('$count ${count == 1 ? 'item' : 'items'}', style: GoogleFonts.dmSans(fontSize: 10, color: Colors.grey, fontWeight: FontWeight.w500)),
+            Text(
+              name.toUpperCase(),
+              style: GoogleFonts.dmSans(
+                fontSize: 12,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 0.5,
+              ),
+            ),
+            Text(
+              '$count ${count == 1 ? 'item' : 'items'}',
+              style: GoogleFonts.dmSans(
+                fontSize: 10,
+                color: Colors.grey,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
           ],
         ),
         const Spacer(),
-        Text('₹${subtotal.toStringAsFixed(0)}', style: GoogleFonts.jetBrainsMono(fontSize: 14, fontWeight: FontWeight.w900, color: AppColors.textDark)),
+        Text(
+          '₹${subtotal.toStringAsFixed(0)}',
+          style: GoogleFonts.jetBrainsMono(
+            fontSize: 14,
+            fontWeight: FontWeight.w900,
+            color: AppColors.textDark,
+          ),
+        ),
       ],
     );
   }
@@ -301,4 +472,3 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     return '🏷️';
   }
 }
-
