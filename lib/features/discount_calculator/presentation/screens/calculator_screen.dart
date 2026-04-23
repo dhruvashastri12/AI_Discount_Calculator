@@ -4,8 +4,6 @@ import 'package:ai_discount_calculator/core/constants/app_colors.dart';
 import 'package:ai_discount_calculator/core/constants/app_strings.dart';
 import 'package:ai_discount_calculator/core/constants/app_constants.dart';
 
-/// Screen for calculating discounts with an interactive keypad.
-/// Supports both percentage and flat currency discounts.
 class CalculatorScreen extends StatefulWidget {
   const CalculatorScreen({super.key});
 
@@ -14,18 +12,15 @@ class CalculatorScreen extends StatefulWidget {
 }
 
 class _CalculatorScreenState extends State<CalculatorScreen> {
-  // Input state variables
   String originalPriceStr = "0";
   String discountStr = "0";
   bool isPercent = true;
   bool selectingPrice = true;
   String? limitWarning;
 
-  // Calculators converting string inputs to numeric values
   double get originalPrice => double.tryParse(originalPriceStr) ?? 0.0;
   double get discountValue => double.tryParse(discountStr) ?? 0.0;
 
-  /// Calculates the total currency amount saved based on current inputs.
   double get savedAmount {
     if (isPercent) {
       return (originalPrice * discountValue) / 100;
@@ -34,12 +29,8 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
     }
   }
 
-  /// Calculates the final amount to be paid.
-  double get payableAmount {
-    return (originalPrice - savedAmount).clamp(0, double.infinity);
-  }
+  double get payableAmount => (originalPrice - savedAmount).clamp(0, double.infinity);
 
-  /// Handles custom keypad interactions including number entry, backspace, and clearing.
   void _onKeyTap(String key) {
     setState(() {
       limitWarning = null;
@@ -61,20 +52,15 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
         }
       } else {
         String current = selectingPrice ? originalPriceStr : discountStr;
-
-        // Prevent overflow beyond max allowed digits
         if (current.replaceAll(".", "").length >= AppConstants.maxInputDigits) {
           limitWarning = "Maximum ${AppConstants.maxInputDigits} digits allowed";
           return;
         }
-
         if (current == "0") {
           current = key;
         } else {
           current += key;
         }
-        
-        // Update the active input field
         if (selectingPrice) {
           originalPriceStr = current;
         } else {
@@ -87,25 +73,20 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
   @override
   Widget build(BuildContext context) {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
-    final Color currentBg = isDark ? AppColors.background : AppColors.backgroundLight;
-    final Color currentSurface = isDark ? AppColors.surface : AppColors.white;
 
     return Scaffold(
-      backgroundColor: currentBg,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         bottom: false,
         child: Column(
           children: [
-            // Results Section (Top Half)
             Expanded(
               flex: AppConstants.calcTopFlex.toInt(),
               child: _buildResultBoard(isDark),
             ),
-
-            // Keypad & Input Controls (Bottom Half)
             Expanded(
               flex: AppConstants.calcBottomFlex.toInt(),
-              child: _buildControlsSection(isDark, currentSurface),
+              child: _buildControlsSection(isDark),
             ),
           ],
         ),
@@ -113,141 +94,104 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
     );
   }
 
-  /// Builds the display showing the calculated payable amount.
   Widget _buildResultBoard(bool isDark) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: AppConstants.spaceS + 2),
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          if (!isDark)
-            Container(
-              width: 180,
-              height: 180,
-              decoration: BoxDecoration(
-                color: AppColors.primaryCalc.withValues(alpha: 0.03),
-                shape: BoxShape.circle,
+      padding: const EdgeInsets.symmetric(vertical: AppConstants.spaceS),
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              AppStrings.calcFinalPrice,
+              style: GoogleFonts.dmSans(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textMuted,
+                letterSpacing: 2,
               ),
             ),
-          Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                AppStrings.calcFinalPrice,
-                style: GoogleFonts.spaceGrotesk(
-                  fontSize: AppConstants.fontSizeM - 1,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textMuted,
-                  letterSpacing: 2.5,
-                ),
-              ),
-              const SizedBox(height: AppConstants.spaceXS + 2),
-              FittedBox(
-                 fit: BoxFit.scaleDown,
-                 child: Padding(
-                   padding: const EdgeInsets.symmetric(horizontal: AppConstants.spaceL),
-                   child: Text(
-                     "${AppStrings.calcRupeeSymbol}${payableAmount.toStringAsFixed(2)}",
-                     style: GoogleFonts.spaceGrotesk(
-                       fontSize: AppConstants.fontSizeGiant,
-                       fontWeight: FontWeight.bold,
-                       color: AppColors.primaryCalc,
-                     ),
+            const SizedBox(height: 8),
+            FittedBox(
+               fit: BoxFit.scaleDown,
+               child: Padding(
+                 padding: const EdgeInsets.symmetric(horizontal: 20),
+                 child: Text(
+                   "${AppStrings.calcRupeeSymbol}${payableAmount.toStringAsFixed(0)}",
+                   style: GoogleFonts.jetBrainsMono(
+                     fontSize: 64,
+                     fontWeight: FontWeight.w900,
+                     color: AppColors.primaryGreen,
                    ),
                  ),
+               ),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.white,
+                borderRadius: BorderRadius.circular(30),
+                boxShadow: [if (!isDark) BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10)],
               ),
-              const SizedBox(height: AppConstants.spaceS + 2),
-              
-              // Savings indicator pill
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppConstants.spaceM + 2, 
-                  vertical: AppConstants.spaceXS + 2
-                ),
-                decoration: BoxDecoration(
-                  color: isDark ? AppColors.surface : AppColors.white,
-                  borderRadius: BorderRadius.circular(AppConstants.borderRadiusXL),
-                  border: Border.all(
-                      color: isDark ? AppColors.white.withValues(alpha: 0.05) : AppColors.accentMuted),
-                  boxShadow: [
-                    if (!isDark)
-                      BoxShadow(color: AppColors.shadow, blurRadius: 10)
-                  ],
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Text(
-                      "${AppStrings.calcSavings} ", 
-                      style: TextStyle(fontSize: AppConstants.fontSizeS, fontWeight: FontWeight.bold, color: AppColors.textMuted)
-                    ),
-                    Text(
-                      "${AppStrings.calcRupeeSymbol}${savedAmount.toStringAsFixed(2)}", 
-                      style: TextStyle(fontSize: AppConstants.fontSizeL - 1, fontWeight: FontWeight.bold, color: isDark ? AppColors.white : AppColors.textDark)
-                    ),
-                  ],
-                ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text("SAVED ", style: GoogleFonts.dmSans(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.textMuted)),
+                  Text(
+                    "${AppStrings.calcRupeeSymbol}${savedAmount.toStringAsFixed(0)}", 
+                    style: GoogleFonts.jetBrainsMono(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.success)
+                  ),
+                ],
               ),
-            ],
-          ),
-        ],
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  /// Builds the interactive section including input boxes and keypad.
-  Widget _buildControlsSection(bool isDark, Color currentSurface) {
+  Widget _buildControlsSection(bool isDark) {
     return Container(
       decoration: BoxDecoration(
-        color: currentSurface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(AppConstants.borderRadiusXXL + 4)),
+        color: Theme.of(context).cardColor,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.08), blurRadius: 25, offset: const Offset(0, -5))
+          BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.05), blurRadius: 20, offset: const Offset(0, -5))
         ],
       ),
-      padding: const EdgeInsets.fromLTRB(AppConstants.spaceXL, AppConstants.spaceXL, AppConstants.spaceXL, 0),
+      padding: const EdgeInsets.all(24),
       child: Column(
-        mainAxisSize: MainAxisSize.max,
         children: [
           if (limitWarning != null)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 2),
-              child: Text(limitWarning!, style: const TextStyle(color: AppColors.error, fontSize: AppConstants.fontSizeS, fontWeight: FontWeight.bold)),
-            ),
-          
-          // Original Price and Discount Input Boxes
+            Text(limitWarning!, style: const TextStyle(color: AppColors.error, fontSize: 12, fontWeight: FontWeight.bold)),
           Row(
             children: [
               Expanded(child: _inputBox(AppStrings.calcOriginalPrice, originalPriceStr, AppStrings.calcRupeeSymbol, true, selectingPrice, isDark)),
-              const SizedBox(width: AppConstants.spaceM),
+              const SizedBox(width: 16),
               Expanded(child: _inputBox(AppStrings.calcDiscountPercent, discountStr, isPercent ? AppStrings.calcPercentSymbol : AppStrings.calcRupeeSymbol, false, !selectingPrice, isDark)),
             ],
           ),
-          const SizedBox(height: AppConstants.spaceM),
-
-          // Percentage vs Flat Toggle
+          const SizedBox(height: 16),
           Container(
-            height: AppConstants.fieldHeight - 14,
-            padding: const EdgeInsets.all(AppConstants.spaceXS),
-            decoration: BoxDecoration(color: isDark ? AppColors.background : AppColors.backgroundLight, borderRadius: BorderRadius.circular(AppConstants.borderRadiusM + 2)),
+            height: 45,
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(color: isDark ? Colors.white.withValues(alpha: 0.05) : AppColors.neutralChip, borderRadius: BorderRadius.circular(12)),
             child: Row(
               children: [
-                _toggleButton("${AppStrings.calcPercentSymbol} Percent", isPercent, isDark, () => setState(() => isPercent = true)),
-                _toggleButton("${AppStrings.calcRupeeSymbol} Flat", !isPercent, isDark, () => setState(() => isPercent = false)),
+                _toggleButton("PERCENT %", isPercent, isDark, () => setState(() => isPercent = true)),
+                _toggleButton("FLAT ₹", !isPercent, isDark, () => setState(() => isPercent = false)),
               ],
             ),
           ),
-          const SizedBox(height: AppConstants.spaceM),
-
-          // Custom Keypad Grid
+          const SizedBox(height: 16),
           Expanded(
             child: GridView.count(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               crossAxisCount: 3,
-              childAspectRatio: AppConstants.keypadAspectRatio,
-              mainAxisSpacing: AppConstants.spaceS,
-              crossAxisSpacing: AppConstants.spaceS,
+              childAspectRatio: 1.5,
+              mainAxisSpacing: 8,
+              crossAxisSpacing: 8,
               children: [
                 for (var i = 1; i <= 9; i++) _keyButton(i.toString(), isDark),
                 _keyButton("AC", isDark, isAction: true),
@@ -256,48 +200,34 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
               ],
             ),
           ),
-          
-          // Interactivity hint
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: AppConstants.spaceS),
-            child: Text(
-              "TAP VALUES TO EDIT",
-              style: GoogleFonts.spaceGrotesk(
-                fontSize: AppConstants.fontSizeS - 1, 
-                color: (isDark ? AppColors.white : AppColors.textDark).withValues(alpha: 0.2),
-                letterSpacing: 2.5
-              ),
-            ),
-          ),
         ],
       ),
     );
   }
 
-  /// Builds a stylized input box for displaying and switching between input values.
   Widget _inputBox(String label, String value, String unit, bool unitPrefix, bool active, bool isDark) {
     return GestureDetector(
       onTap: () => setState(() { selectingPrice = (label == AppStrings.calcOriginalPrice); limitWarning = null; }),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label.toUpperCase(), style: TextStyle(fontSize: AppConstants.fontSizeS - 1, fontWeight: FontWeight.bold, color: active ? AppColors.primaryCalc : AppColors.textMuted)),
-          const SizedBox(height: AppConstants.spaceXS + 2),
+          Text(label.toUpperCase(), style: GoogleFonts.dmSans(fontSize: 10, fontWeight: FontWeight.bold, color: active ? AppColors.primaryGreen : AppColors.neutralText)),
+          const SizedBox(height: 6),
           Container(
-            height: AppConstants.fieldHeight - 6,
-            padding: const EdgeInsets.symmetric(horizontal: AppConstants.spaceM),
+            height: 55,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
             decoration: BoxDecoration(
-              color: isDark ? AppColors.background : AppColors.backgroundLight,
-              borderRadius: BorderRadius.circular(AppConstants.borderRadiusM + 2),
-              border: Border.all(color: active ? AppColors.primaryCalc : (isDark ? AppColors.white.withValues(alpha: 0.05) : AppColors.accentMuted), width: 1.5),
+              color: isDark ? Colors.white.withValues(alpha: 0.05) : AppColors.neutralChip,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: active ? AppColors.primaryGreen : Colors.transparent, width: 1.5),
             ),
             child: Row(
               children: [
-                if (unitPrefix) Text(unit, style: const TextStyle(color: AppColors.textMuted, fontSize: AppConstants.fontSizeL)),
+                if (unitPrefix) Text(unit, style: GoogleFonts.jetBrainsMono(color: AppColors.neutralText, fontSize: 16)),
                 Expanded(
-                  child: Text(value, style: TextStyle(fontSize: AppConstants.fontSizeXL, fontWeight: FontWeight.bold, color: isDark ? AppColors.white : AppColors.textDark), overflow: TextOverflow.ellipsis),
+                  child: Text(value, style: GoogleFonts.jetBrainsMono(fontSize: 20, fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis),
                 ),
-                if (!unitPrefix) Text(unit, style: const TextStyle(color: AppColors.textMuted, fontSize: AppConstants.fontSizeL)),
+                if (!unitPrefix) Text(unit, style: GoogleFonts.jetBrainsMono(color: AppColors.neutralText, fontSize: 16)),
                 if (active) ...[const SizedBox(width: 4), _cursor()],
               ],
             ),
@@ -307,45 +237,40 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
     );
   }
 
-  /// Visual cursor indicator for active input.
   Widget _cursor() {
-    return Container(width: 2, height: AppConstants.fontSizeXL, color: AppColors.primaryCalc);
+    return Container(width: 2, height: 20, color: AppColors.primaryGreen);
   }
 
-  /// Stylized toggle switch for selecting discount type.
   Widget _toggleButton(String text, bool active, bool isDark, VoidCallback onTap) {
     return Expanded(
       child: GestureDetector(
         onTap: onTap,
         child: Container(
-          decoration: BoxDecoration(color: active ? AppColors.primaryCalc : Colors.transparent, borderRadius: BorderRadius.circular(10)),
+          decoration: BoxDecoration(color: active ? AppColors.primaryGreen : Colors.transparent, borderRadius: BorderRadius.circular(10)),
           alignment: Alignment.center,
-          child: Text(text, style: TextStyle(color: active ? (isDark ? Colors.black : AppColors.white) : AppColors.textMuted, fontWeight: active ? FontWeight.bold : FontWeight.normal, fontSize: AppConstants.fontSizeM)),
+          child: Text(text, style: GoogleFonts.dmSans(color: active ? Colors.white : AppColors.neutralText, fontWeight: FontWeight.bold, fontSize: 12)),
         ),
       ),
     );
   }
 
-  /// Reusable keypad button widget.
   Widget _keyButton(String label, bool isDark, {bool isAction = false, bool isIcon = false}) {
     return Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: () => _onKeyTap(label),
-        borderRadius: BorderRadius.circular(AppConstants.borderRadiusM),
+        borderRadius: BorderRadius.circular(12),
         child: Container(
           decoration: BoxDecoration(
-            color: label == "AC" ? AppColors.error.withValues(alpha: 0.08) : (isDark ? AppColors.surfaceActive : AppColors.backgroundLight),
-            borderRadius: BorderRadius.circular(AppConstants.borderRadiusM),
-            border: Border.all(color: isDark ? AppColors.white.withValues(alpha: 0.03) : Colors.transparent),
+            color: label == "AC" ? AppColors.error.withValues(alpha: 0.1) : (isDark ? Colors.white.withValues(alpha: 0.05) : AppColors.neutralChip),
+            borderRadius: BorderRadius.circular(12),
           ),
           alignment: Alignment.center,
           child: isIcon 
-            ? Icon(Icons.backspace_outlined, color: isDark ? AppColors.white : AppColors.textDark, size: AppConstants.iconSizeXL - 12)
-            : Text(label, style: TextStyle(fontSize: isAction ? AppConstants.fontSizeL - 1 : AppConstants.fontSizeXL + 2, fontWeight: FontWeight.bold, color: label == "AC" ? AppColors.error : (isDark ? AppColors.white : AppColors.textDark))),
+            ? Icon(Icons.backspace_outlined, size: 20, color: isDark ? Colors.white : AppColors.textDark)
+            : Text(label, style: GoogleFonts.jetBrainsMono(fontSize: isAction ? 16 : 24, fontWeight: FontWeight.bold, color: label == "AC" ? AppColors.error : (isDark ? Colors.white : AppColors.textDark))),
         ),
       ),
     );
   }
 }
-
