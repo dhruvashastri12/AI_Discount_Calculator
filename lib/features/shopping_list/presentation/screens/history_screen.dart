@@ -260,7 +260,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
             _buildMonthlySummaryCard(monthKey, days),
             if (isExpanded) ...[
               const SizedBox(height: 8),
-              ...sortedDates.map((date) => _buildDayCard(date, days[date]!)).toList(),
+              ...sortedDates.map((date) => _buildDayCard(date, days[date]!)),
             ],
             const SizedBox(height: 16),
           ],
