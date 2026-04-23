@@ -256,21 +256,23 @@ class _HistoryScreenState extends State<HistoryScreen> {
       backgroundColor: Colors.transparent,
       builder: (context) => AddItemModal(
         editItem: item,
-        onItemAdded: (name, qty, unit, unitPrice, discount, isPercent, date) {
+        onItemAdded: (name, qty, unit, unitPrice, discount, discountType, priceMode, catId, date) {
           final updatedItem = CartItem(
             id: item!.id,
             title: name,
-            qty: "${qty.toString().replaceAll(RegExp(r'\.0$'), '')} $unit",
-            price: _calculateFinalPrice(qty, unitPrice, discount, isPercent),
-            originalPrice: discount > 0 ? unitPrice * qty : null,
-            discountLabel: _buildDiscountLabel(discount, isPercent),
+            qty: priceMode == PriceMode.flat ? unit : "${qty.toString().replaceAll(RegExp(r'\.0$'), '')} $unit",
+            price: _calculateFinalPrice(qty, unitPrice, discount, discountType, priceMode),
+            originalPrice: discount > 0 ? (priceMode == PriceMode.flat ? unitPrice : unitPrice * qty) : null,
+            discountLabel: _buildDiscountLabel(discount, discountType),
             iconCode: item.iconCode,
             date: date,
             unitPrice: unitPrice,
             rawQty: qty,
             unit: unit,
             discountValue: discount,
-            isPercent: isPercent,
+            discountType: discountType,
+            priceMode: priceMode,
+            categoryId: catId,
           );
           dataService.updateItem(updatedItem, alsoInHistory: true);
         },
@@ -282,21 +284,22 @@ class _HistoryScreenState extends State<HistoryScreen> {
     double qty,
     double unitPrice,
     double discount,
-    bool isPercent,
+    DiscountType discountType,
+    PriceMode priceMode,
   ) {
-    double total = qty * unitPrice;
-    if (isPercent) {
+    double total = priceMode == PriceMode.flat ? unitPrice : (qty * unitPrice);
+    if (discountType == DiscountType.percentage) {
       return total * (1 - discount / 100);
     } else {
       return total - discount;
     }
   }
 
-  String? _buildDiscountLabel(double discount, bool isPercent) {
+  String? _buildDiscountLabel(double discount, DiscountType type) {
     if (discount <= 0) return null;
-    return isPercent
+    return type == DiscountType.percentage
         ? "${discount.toStringAsFixed(0)}% OFF"
-        : "${AppStrings.calcRupeeSymbol}${discount.toStringAsFixed(0)} OFF";
+        : "₹${discount.toStringAsFixed(0)} OFF";
   }
 
   /// Handles individual item deletion from history.

@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/cart_item.dart';
+import '../models/category_group.dart';
 import '../constants/app_constants.dart';
 
 /// Service responsible for managing shopping list data and history.
@@ -13,9 +14,11 @@ class DataService extends ChangeNotifier {
 
   // Observable state for UI updates
   List<CartItem> _currentItems = [];
+  List<CategoryGroup> _categories = [];
   List<Map<String, dynamic>> _historyData = [];
 
   List<CartItem> get currentItems => _currentItems;
+  List<CategoryGroup> get categories => _categories;
   List<Map<String, dynamic>> get historyData => _historyData;
 
   /// Initializes the service by loading stored data and checking for date changes.
@@ -26,6 +29,21 @@ class DataService extends ChangeNotifier {
     final currentStr = prefs.getString(AppConstants.keyCurrentItems) ?? '[]';
     final List decodedCurrent = jsonDecode(currentStr);
     _currentItems = decodedCurrent.map((e) => CartItem.fromJson(e)).toList();
+
+    // Load categories
+    final categoriesStr = prefs.getString('categories_data') ?? '[]';
+    final List decodedCategories = jsonDecode(categoriesStr);
+    _categories = decodedCategories.map((e) => CategoryGroup.fromJson(e)).toList();
+
+    if (_categories.isEmpty) {
+      _categories = [
+        CategoryGroup(id: 'veggies', name: 'Veggies'),
+        CategoryGroup(id: 'milk', name: 'Milk'),
+        CategoryGroup(id: 'grocery', name: 'Grocery'),
+        CategoryGroup(id: 'others', name: 'Others'),
+      ];
+      _saveCategories();
+    }
 
     // Load history data from persistent storage
     final historyStr = prefs.getString(AppConstants.keyHistoryData) ?? '[]';
@@ -82,9 +100,9 @@ class DataService extends ChangeNotifier {
     }
   }
 
-  /// Seeds dummy data for testing purposes (Current list and April 7th history).
+  /// Seeds dummy data for testing purposes.
   void _seedDummyData() {
-    final yesterday = DateTime(2026, 4, 7);
+    final yesterday = DateTime.now().subtract(const Duration(days: 1));
     
     _currentItems = [
       CartItem(
@@ -95,88 +113,91 @@ class DataService extends ChangeNotifier {
         originalPrice: 200.0,
         discountLabel: '10% OFF',
         iconCode: Icons.egg_outlined.codePoint,
-        date: yesterday,
-        unitPrice: 16.66,
-        rawQty: 12.0,
+        date: DateTime.now(),
+        priceMode: PriceMode.flat,
+        categoryId: 'grocery',
+        discountType: DiscountType.percentage,
+        discountValue: 10,
+        unitPrice: 200,
+        rawQty: 1,
         unit: 'pcs',
-        discountValue: 10.0,
-        isPercent: true,
       ),
       CartItem(
         id: 'seed_curr_2',
-        title: 'Brown Bread',
-        qty: '1 unit',
-        price: 45.0,
-        iconCode: Icons.bakery_dining.codePoint,
-        date: yesterday,
-        unitPrice: 45.0,
-        rawQty: 1.0,
-        unit: 'unit',
-      ),
-      CartItem(
-        id: 'seed_curr_3',
-        title: 'Banana Bundle',
-        qty: '1 kg',
-        price: 60.0,
-        originalPrice: 80.0,
-        discountLabel: '₹20 OFF',
+        title: 'Tomatoes',
+        qty: '500 g',
+        price: 35.0,
+        originalPrice: 35.0,
         iconCode: Icons.shopping_basket_outlined.codePoint,
-        date: yesterday,
-        unitPrice: 80.0,
-        rawQty: 1.0,
-        unit: 'kg',
-        discountValue: 20.0,
-        isPercent: false,
+        date: DateTime.now(),
+        priceMode: PriceMode.perUnit,
+        categoryId: 'veggies',
+        discountType: DiscountType.amount,
+        discountValue: 0,
+        unitPrice: 70,
+        rawQty: 500,
+        unit: 'g',
       ),
-    ];
-
-    final List<CartItem> historyItems = [
-      CartItem(
-        id: 'hist_1',
-        title: 'Fresh Milk',
-        qty: '2 litre',
-        price: 120.0,
-        iconCode: Icons.water_drop.codePoint,
-        date: yesterday,
-        unitPrice: 60.0,
-        rawQty: 2.0,
-        unit: 'litre',
-      ),
-      CartItem(
-        id: 'hist_2',
-        title: 'Tomato',
-        qty: '1 kg',
-        price: 40.0,
-        iconCode: Icons.shopping_cart.codePoint,
-        date: yesterday,
-        unitPrice: 40.0,
-        rawQty: 1.0,
-        unit: 'kg',
-      ),
-      CartItem(
-        id: 'hist_3',
-        title: 'Eggs',
-        qty: '1 dozen',
-        price: 72.0,
-        iconCode: Icons.shopping_cart.codePoint,
-        date: yesterday,
-        unitPrice: 72.0,
-        rawQty: 1.0,
-        unit: 'dozen',
-      ),
-    ];
-
-    _historyData = [
-      {
-        'date': yesterday.toIso8601String(),
-        'total': historyItems.fold(0.0, (sum, it) => sum + it.price),
-        'items_count': historyItems.length,
-        'details': historyItems.map((e) => e.toJson()).toList(),
-      }
     ];
 
     _saveCurrent();
-    _saveHistory();
+    _saveCategories();
+  }
+
+  Future<void> _saveCategories() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('categories_data', jsonEncode(_categories.map((e) => e.toJson()).toList()));
+  }
+
+  void updateCategoryGroup(CategoryGroup updatedCategory) {
+    final index = _categories.indexWhere((c) => c.id == updatedCategory.id);
+    if (index != -1) {
+      _categories[index] = updatedCategory;
+      _saveCategories();
+      notifyListeners();
+    }
+  }
+
+  CategoryGroup getCategoryById(String id) {
+    return _categories.firstWhere((c) => c.id == id, orElse: () => CategoryGroup(id: 'others', name: 'Others'));
+  }
+
+  // Summary logic calculations
+  double get totalItemsSubtotal => _currentItems.fold(0, (sum, item) => sum + (item.originalPrice ?? item.price));
+  double get totalItemDiscounts => _currentItems.fold(0, (sum, item) => sum + ((item.originalPrice ?? item.price) - item.price));
+  
+  double get totalVendorRoundOffs {
+    double total = 0;
+    final grouped = groupItemsByCategory();
+    grouped.forEach((categoryId, items) {
+      final category = getCategoryById(categoryId);
+      total += category.vendorRoundOff;
+    });
+    return total;
+  }
+
+  double get totalStoreOffers {
+    double total = 0;
+    final grouped = groupItemsByCategory();
+    grouped.forEach((categoryId, items) {
+      final category = getCategoryById(categoryId);
+      if (category.storeOfferPercent > 0) {
+        double categorySubtotal = items.fold(0, (sum, it) => sum + it.price);
+        double afterRoundOff = categorySubtotal - category.vendorRoundOff;
+        total += afterRoundOff * (category.storeOfferPercent / 100);
+      }
+    });
+    return total;
+  }
+
+  double get finalTotalValue => totalItemsSubtotal - totalItemDiscounts - totalVendorRoundOffs - totalStoreOffers;
+
+  Map<String, List<CartItem>> groupItemsByCategory() {
+    Map<String, List<CartItem>> grouped = {};
+    for (var item in _currentItems) {
+      grouped.putIfAbsent(item.categoryId, () => []).add(item);
+    }
+    return grouped;
   }
 
   void addItem(CartItem item) {

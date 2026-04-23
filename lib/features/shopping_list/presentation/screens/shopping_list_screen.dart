@@ -7,6 +7,7 @@ import 'package:ai_discount_calculator/core/constants/app_strings.dart';
 import 'package:ai_discount_calculator/core/constants/app_constants.dart';
 import 'package:ai_discount_calculator/core/services/data_service.dart';
 import 'package:ai_discount_calculator/core/models/cart_item.dart';
+import 'package:ai_discount_calculator/core/models/category_group.dart';
 
 /// Screen displaying the current shopping list and allowing users to add/remove items.
 class ShoppingListScreen extends StatefulWidget {
@@ -17,7 +18,6 @@ class ShoppingListScreen extends StatefulWidget {
 }
 
 class _ShoppingListScreenState extends State<ShoppingListScreen> {
-  // Toggle for FAB position (left/right) based on long-press
   bool _fabOnRight = true;
 
   @override
@@ -37,27 +37,18 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     if (mounted) setState(() {});
   }
 
-  // Helper getters for calculating totals
-  double get subtotal => dataService.currentItems.fold(
-    0,
-    (sum, item) => sum + (item.originalPrice ?? item.price),
-  );
-  double get savings => dataService.currentItems.fold(
-    0,
-    (sum, item) =>
-        sum +
-        (item.originalPrice != null ? (item.originalPrice! - item.price) : 0),
-  );
-  double get finalTotal => subtotal - savings;
+  // Note: Totals are now handled by DataService to support category-level discounts.
 
   int _getIconCodeForName(String name) {
     final n = name.toLowerCase();
     if (n.contains(AppStrings.keywordApple)) return Icons.apple.codePoint;
     if (n.contains(AppStrings.keywordMilk) ||
-        n.contains(AppStrings.keywordWater))
+        n.contains(AppStrings.keywordWater)) {
       return Icons.water_drop.codePoint;
-    if (n.contains(AppStrings.keywordBread))
+    }
+    if (n.contains(AppStrings.keywordBread)) {
       return Icons.bakery_dining.codePoint;
+    }
     return Icons.shopping_cart.codePoint;
   }
 
@@ -113,6 +104,9 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                     child: CustomScrollView(
                       physics: const BouncingScrollPhysics(),
                       slivers: [
+                        if (dataService.currentItems.isNotEmpty)
+                          SliverToBoxAdapter(child: _buildStoreOfferBanner()),
+                          
                         if (dataService.currentItems.isEmpty)
                           _buildEmptyState()
                         else
@@ -164,45 +158,23 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     );
   }
 
-  /// Builds the grouped list of items.
+  /// Builds the grouped list of items by Category.
   List<Widget> _buildItemList(bool isDark) {
-    final items = dataService.currentItems;
-    // Group items by date (DD/MM/YYYY)
-    final Map<String, List<CartItem>> groupedItems = {};
-    for (var item in items) {
-      final dateStr = DateFormat('dd/MM/yyyy').format(item.date);
-      groupedItems.putIfAbsent(dateStr, () => []).add(item);
-    }
-
-    // Sort dates in descending order
-    final sortedDates = groupedItems.keys.toList()
-      ..sort((a, b) {
-        final dateA = DateFormat('dd/MM/yyyy').parse(a);
-        final dateB = DateFormat('dd/MM/yyyy').parse(b);
-        return dateB.compareTo(dateA);
-      });
+    final groupedItems = dataService.groupItemsByCategory();
+    final sortedCategoryIds = groupedItems.keys.toList();
 
     final List<Widget> slivers = [];
-    for (var date in sortedDates) {
+    for (var catId in sortedCategoryIds) {
+      final category = dataService.getCategoryById(catId);
+      final items = groupedItems[catId]!;
+      
+      double catSubtotal = items.fold(0, (sum, it) => sum + it.price);
+      double afterRoundOff = catSubtotal - category.vendorRoundOff;
+      double finalCatTotal = afterRoundOff * (1 - category.storeOfferPercent / 100);
+
       slivers.add(
         SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(
-              AppConstants.spaceL,
-              AppConstants.spaceL,
-              AppConstants.spaceL,
-              8,
-            ),
-            child: Text(
-              date,
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: AppConstants.fontSizeS,
-                color: AppColors.textMuted,
-                letterSpacing: 1.2,
-              ),
-            ),
-          ),
+          child: _buildCategoryHeader(category, catSubtotal, finalCatTotal, isDark),
         ),
       );
 
@@ -211,15 +183,159 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
           padding: const EdgeInsets.symmetric(horizontal: AppConstants.spaceL),
           sliver: SliverList(
             delegate: SliverChildBuilderDelegate(
-              (context, index) =>
-                  _buildCartItem(groupedItems[date]![index], isDark),
-              childCount: groupedItems[date]!.length,
+              (context, index) => _buildCartItem(items[index], isDark),
+              childCount: items.length,
             ),
           ),
         ),
       );
     }
     return slivers;
+  }
+
+  Widget _buildCategoryHeader(CategoryGroup cat, double subtotal, double total, bool isDark) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(AppConstants.spaceL, AppConstants.spaceL, AppConstants.spaceL, 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              GestureDetector(
+                onTap: () => _showCategorySettings(cat),
+                child: Row(
+                  children: [
+                    Text(
+                      cat.name.toUpperCase(),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: AppConstants.fontSizeS + 2,
+                        color: AppColors.primaryAction,
+                        letterSpacing: 1.5,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    const Icon(Icons.settings, size: 14, color: AppColors.primaryAction),
+                  ],
+                ),
+              ),
+              Text(
+                "Subtotal: ₹${subtotal.toStringAsFixed(2)}",
+                style: const TextStyle(
+                  fontSize: AppConstants.fontSizeS,
+                  color: AppColors.textMuted,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          if (cat.vendorRoundOff > 0 || cat.storeOfferPercent > 0)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Row(
+                children: [
+                  if (cat.vendorRoundOff > 0)
+                    _buildTinyTag("Round-off: -₹${cat.vendorRoundOff.toStringAsFixed(0)}", Colors.blue),
+                  if (cat.vendorRoundOff > 0 && cat.storeOfferPercent > 0) const SizedBox(width: 8),
+                  if (cat.storeOfferPercent > 0)
+                    _buildTinyTag("Store Offer: ${cat.storeOfferPercent.toStringAsFixed(0)}%", Colors.orange),
+                  const Spacer(),
+                  Text(
+                    "Shop Total: ₹${total.toStringAsFixed(2)}",
+                    style: const TextStyle(
+                      fontSize: AppConstants.fontSizeS + 2,
+                      color: AppColors.success,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          const Divider(thickness: 0.5),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTinyTag(String text, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.bold),
+      ),
+    );
+  }
+
+  Widget _buildStoreOfferBanner() {
+    return Container(
+      margin: const EdgeInsets.all(AppConstants.spaceL),
+      padding: const EdgeInsets.symmetric(horizontal: AppConstants.spaceL, vertical: 10),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(colors: [Colors.orange.shade400, Colors.orange.shade700]),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: const Row(
+        children: [
+          Icon(Icons.stars, color: Colors.white, size: 20),
+          SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              "SUPER MALL OFFER ACTIVE: Extra discounts applied on category subtotals!",
+              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showCategorySettings(CategoryGroup cat) {
+    final TextEditingController roundOffController = TextEditingController(text: cat.vendorRoundOff.toString());
+    final TextEditingController offerController = TextEditingController(text: cat.storeOfferPercent.toString());
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text("Shop Settings: ${cat.name}"),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: roundOffController,
+              decoration: const InputDecoration(labelText: "Vendor Round-off (₹)", hintText: "e.g. 3"),
+              keyboardType: TextInputType.number,
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: offerController,
+              decoration: const InputDecoration(labelText: "Store Offer (%)", hintText: "e.g. 5"),
+              keyboardType: TextInputType.number,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Cancel")),
+          ElevatedButton(
+            onPressed: () {
+              final updated = cat.copyWith(
+                vendorRoundOff: double.tryParse(roundOffController.text) ?? 0,
+                storeOfferPercent: double.tryParse(offerController.text) ?? 0,
+              );
+              dataService.updateCategoryGroup(updated);
+              Navigator.pop(ctx);
+            },
+            child: const Text("Apply"),
+          ),
+        ],
+      ),
+    );
   }
 
   /// Builds the interactive FAB.
@@ -315,14 +431,16 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       backgroundColor: Colors.transparent,
       builder: (context) => AddItemModal(
         editItem: itemToEdit,
-        onItemAdded: (name, qty, unit, unitPrice, discount, isPercent, date) {
+        onItemAdded: (name, qty, unit, unitPrice, discount, discountType, priceMode, catId, date) {
           _processAddItem(
             name,
             qty,
             unit,
             unitPrice,
             discount,
-            isPercent,
+            discountType,
+            priceMode,
+            catId,
             date: date,
             editingId: itemToEdit?.id,
           );
@@ -338,31 +456,36 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     String unit,
     double unitPrice,
     double discount,
-    bool isPercent, {
+    DiscountType discountType,
+    PriceMode priceMode,
+    String categoryId, {
     DateTime? date,
     String? editingId,
   }) {
-    double totalOriginalPrice = unitPrice * qty;
+    double totalOriginalPrice;
+    
+    if (priceMode == PriceMode.flat) {
+      totalOriginalPrice = unitPrice;
+    } else {
+      totalOriginalPrice = unitPrice * qty;
+    }
+
     double finalPrice = totalOriginalPrice;
     String? discountLabel;
     double? originalPriceForRecord;
 
-    // Calculate discount based on type (percentage or fixed amount)
-    if (isPercent) {
+    // Calculate discount based on type (percentage or flat amount)
+    if (discountType == DiscountType.percentage) {
       if (discount > 0) {
         originalPriceForRecord = totalOriginalPrice;
-        finalPrice =
-            totalOriginalPrice *
-            (1 - discount / AppConstants.maxDiscountPercent);
-        discountLabel =
-            "${discount.toStringAsFixed(0)}${AppStrings.calcPercentSymbol} ${AppStrings.listOffLabel}";
+        finalPrice = totalOriginalPrice * (1 - discount / 100);
+        discountLabel = "${discount.toStringAsFixed(0)}% OFF";
       }
     } else {
       if (discount > 0) {
         originalPriceForRecord = totalOriginalPrice;
         finalPrice = totalOriginalPrice - discount;
-        discountLabel =
-            "${AppStrings.calcRupeeSymbol}${discount.toStringAsFixed(0)} ${AppStrings.listOffLabel}";
+        discountLabel = "₹${discount.toStringAsFixed(0)} OFF";
       }
     }
 
@@ -370,17 +493,19 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     final newItem = CartItem(
       id: editingId ?? DateTime.now().millisecondsSinceEpoch.toString(),
       title: name,
-      qty: "${qty.toString().replaceAll(RegExp(r'\.0$'), '')} $unit",
+      qty: priceMode == PriceMode.flat ? unit : "${qty.toString().replaceAll(RegExp(r'\.0$'), '')} $unit",
       price: finalPrice,
       originalPrice: originalPriceForRecord,
       discountLabel: discountLabel,
       iconCode: _getIconCodeForName(name),
       date: date ?? DateTime.now(),
+      priceMode: priceMode,
+      categoryId: categoryId,
+      discountType: discountType,
+      discountValue: discount,
       unitPrice: unitPrice,
       rawQty: qty,
       unit: unit,
-      discountValue: discount,
-      isPercent: isPercent,
     );
 
     if (editingId != null) {
@@ -411,82 +536,99 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
           ),
         ],
       ),
-      child: Row(
+      child: Column(
         children: [
-          Expanded(
-            flex: 6,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  AppStrings.listSubtotalSavings,
-                  style: TextStyle(
-                    fontSize: AppConstants.fontSizeS,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textMuted,
-                  ),
-                ),
-                const SizedBox(height: AppConstants.spaceS),
-                FittedBox(
-                  fit: BoxFit.scaleDown,
-                  alignment: Alignment.centerLeft,
-                  child: Row(
-                    children: [
-                      Text(
-                        "${AppStrings.calcRupeeSymbol}${subtotal.toStringAsFixed(2)}",
+          Row(
+            children: [
+              Expanded(
+                flex: 6,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      "GROSS SUB-TOTAL",
+                      style: TextStyle(
+                        fontSize: AppConstants.fontSizeS,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textMuted,
+                      ),
+                    ),
+                    const SizedBox(height: AppConstants.spaceS),
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        "${AppStrings.calcRupeeSymbol}${dataService.totalItemsSubtotal.toStringAsFixed(2)}",
                         style: TextStyle(
                           fontSize: AppConstants.fontSizeXXL,
                           fontWeight: FontWeight.bold,
                           color: isDark ? AppColors.white : AppColors.textDark,
                         ),
                       ),
-                      const SizedBox(width: AppConstants.spaceS),
-                      Text(
-                        "-${AppStrings.calcRupeeSymbol}${savings.toStringAsFixed(2)}",
+                    ),
+                  ],
+                ),
+              ),
+              Container(width: 1, height: 40, color: AppColors.accentMuted),
+              const SizedBox(width: AppConstants.spaceL),
+              Expanded(
+                flex: 4,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    const Text(
+                      "GRAND TOTAL",
+                      style: TextStyle(
+                        fontSize: AppConstants.fontSizeS,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textMuted,
+                      ),
+                    ),
+                    const SizedBox(height: AppConstants.spaceXS),
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        "${AppStrings.calcRupeeSymbol}${dataService.finalTotalValue.toStringAsFixed(2)}",
                         style: const TextStyle(
-                          fontSize: AppConstants.fontSizeL,
+                          fontSize: AppConstants.fontSizeL + 12,
                           fontWeight: FontWeight.bold,
-                          color: AppColors.success,
+                          color: AppColors.primaryAction,
                         ),
                       ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Container(width: 1, height: 40, color: AppColors.accentMuted),
-          const SizedBox(width: AppConstants.spaceL),
-          Expanded(
-            flex: 4,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                const Text(
-                  AppStrings.listFinalTotal,
-                  style: TextStyle(
-                    fontSize: AppConstants.fontSizeS,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textMuted,
-                  ),
-                ),
-                const SizedBox(height: AppConstants.spaceXS),
-                FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Text(
-                    "${AppStrings.calcRupeeSymbol}${finalTotal.toStringAsFixed(2)}",
-                    style: const TextStyle(
-                      fontSize: AppConstants.fontSizeL + 12,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.primaryAction,
                     ),
-                  ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppConstants.spaceM),
+          const Divider(height: 1),
+          const SizedBox(height: AppConstants.spaceS),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              _buildSummaryDetail("Item Discounts", "-₹${dataService.totalItemDiscounts.toStringAsFixed(0)}", AppColors.success),
+              _buildSummaryDetail("Round-offs", "-₹${dataService.totalVendorRoundOffs.toStringAsFixed(0)}", Colors.blue),
+              _buildSummaryDetail("Store Offers", "-₹${dataService.totalStoreOffers.toStringAsFixed(0)}", Colors.orange),
+            ],
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildSummaryDetail(String label, String value, Color color) {
+    return Column(
+      children: [
+        Text(
+          label,
+          style: const TextStyle(fontSize: 10, color: AppColors.textMuted, fontWeight: FontWeight.bold),
+        ),
+        Text(
+          value,
+          style: TextStyle(fontSize: 12, color: color, fontWeight: FontWeight.bold),
+        ),
+      ],
     );
   }
 
@@ -649,10 +791,11 @@ class AddItemModal extends StatefulWidget {
     String unit,
     double unitPrice,
     double discount,
-    bool isPercent,
+    DiscountType discountType,
+    PriceMode priceMode,
+    String categoryId,
     DateTime date,
-  )
-  onItemAdded;
+  ) onItemAdded;
 
   const AddItemModal({super.key, this.editItem, required this.onItemAdded});
 
@@ -664,55 +807,49 @@ class AddItemModalState extends State<AddItemModal> {
   // Input controllers
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _qtyController = TextEditingController(text: "1");
-  final TextEditingController _priceController = TextEditingController();
+  final TextEditingController _priceController = TextEditingController(); // This will be "Item Rate"
   final TextEditingController _discountController = TextEditingController();
+  final TextEditingController _customCategoryController = TextEditingController();
+  final TextEditingController _customUnitController = TextEditingController();
 
-  // Focus nodes for highlighting and navigation
+  // Focus nodes
   final FocusNode _nameNode = FocusNode();
   final FocusNode _qtyNode = FocusNode();
   final FocusNode _priceNode = FocusNode();
   final FocusNode _disNode = FocusNode();
 
-  String _selectedUnit = AppStrings.listSelectUnit;
+  String _selectedUnit = 'Piece';
+  String _selectedCategoryId = 'veggies';
   DateTime _selectedDate = DateTime.now();
-  bool _isPercent = true;
+  DiscountType _discountType = DiscountType.percentage;
+  PriceMode _priceMode = PriceMode.perUnit;
+  bool _isCustomCategory = false;
+  bool _isCustomUnit = false;
+  
   bool _canAdd = false;
   String? _errorMsg;
 
   @override
   void initState() {
     super.initState();
-    _nameController.addListener(_validate);
-    _qtyController.addListener(_validate);
-    _priceController.addListener(_validate);
-    _discountController.addListener(_validate);
+    _selectedDate = DateTime.now();
 
-    _nameNode.addListener(_updateUI);
-    _qtyNode.addListener(_updateUI);
-    _priceNode.addListener(_updateUI);
-    _disNode.addListener(_updateUI);
-
-    // Pre-fill if editing
     if (widget.editItem != null) {
       final item = widget.editItem!;
       _nameController.text = item.title;
-      _qtyController.text =
-          item.rawQty?.toString().replaceAll(RegExp(r'\.0$'), '') ?? "";
-      _selectedUnit = item.unit ?? AppStrings.listSelectUnit;
-      _priceController.text =
-          item.unitPrice?.toString().replaceAll(RegExp(r'\.0$'), '') ?? "";
-      _discountController.text =
-          item.discountValue?.toString().replaceAll(RegExp(r'\.0$'), '') ?? "";
-      _isPercent = item.isPercent ?? true;
+      _qtyController.text = item.rawQty.toString().replaceAll(RegExp(r'\.0$'), '');
+      _selectedUnit = item.unit;
+      _selectedCategoryId = item.categoryId;
+      _priceController.text = item.unitPrice.toString().replaceAll(RegExp(r'\.0$'), '');
+      _discountController.text = item.discountValue.toString().replaceAll(RegExp(r'\.0$'), '');
+      _discountType = item.discountType;
+      _priceMode = item.priceMode;
       _selectedDate = item.date;
       _canAdd = true;
     }
 
-    // Auto-focus name field on open if not editing
     if (widget.editItem == null) {
-      WidgetsBinding.instance.addPostFrameCallback(
-        (_) => _nameNode.requestFocus(),
-      );
+      WidgetsBinding.instance.addPostFrameCallback((_) => _nameNode.requestFocus());
     }
   }
 
@@ -723,11 +860,7 @@ class AddItemModalState extends State<AddItemModal> {
     final name = _nameController.text.trim();
     final qty = _qtyController.text.trim();
     final price = _priceController.text.trim();
-    bool valid =
-        name.isNotEmpty &&
-        qty.isNotEmpty &&
-        price.isNotEmpty &&
-        _selectedUnit != AppStrings.listSelectUnit;
+    bool valid = name.isNotEmpty && qty.isNotEmpty && price.isNotEmpty;
     if (valid != _canAdd) setState(() => _canAdd = valid);
   }
 
@@ -736,7 +869,8 @@ class AddItemModalState extends State<AddItemModal> {
     _nameController.dispose();
     _qtyController.dispose();
     _priceController.dispose();
-    _discountController.dispose();
+    _customCategoryController.dispose();
+    _customUnitController.dispose();
     _nameNode.dispose();
     _qtyNode.dispose();
     _priceNode.dispose();
@@ -758,23 +892,35 @@ class AddItemModalState extends State<AddItemModal> {
       return;
     }
 
-    if (_isPercent && discount >= 100) {
+    if (_discountType == DiscountType.percentage && discount >= 100) {
       setState(() => _errorMsg = AppStrings.errorDiscountPercentLimit);
       return;
     }
 
-    if (!_isPercent && discount >= (price * qty)) {
+    double totalVal;
+    if (_priceMode == PriceMode.flat) {
+      totalVal = price;
+    } else {
+      totalVal = price * qty;
+    }
+
+    if (_discountType == DiscountType.amount && discount >= totalVal) {
       setState(() => _errorMsg = AppStrings.errorDiscountAmountLimit);
       return;
     }
 
+    final finalCategory = _isCustomCategory ? _customCategoryController.text.trim() : _selectedCategoryId;
+    final finalUnit = _isCustomUnit ? _customUnitController.text.trim() : _selectedUnit;
+
     widget.onItemAdded(
       name,
       qty,
-      _selectedUnit,
+      finalUnit.isEmpty ? "unit" : finalUnit,
       price,
       discount,
-      _isPercent,
+      _discountType,
+      _priceMode,
+      finalCategory,
       _selectedDate,
     );
     Navigator.pop(context);
@@ -831,26 +977,43 @@ class AddItemModalState extends State<AddItemModal> {
                 ),
               ),
 
+              // 1. Date Bar (Moved from main screen)
+              _buildModernDateBar(isDark),
+              const SizedBox(height: AppConstants.spaceL),
+
+              // 2. Category Selector
+              _buildCategoryChips(isDark, bgColor),
+              const SizedBox(height: AppConstants.spaceL),
+
+              _buildField(
+                AppStrings.listItemName,
+                _nameController,
+                AppStrings.listItemHint,
+                isDark,
+                bgColor,
+                node: _nameNode,
+                isText: true,
+              ),
+              const SizedBox(height: AppConstants.spaceL),
+
+              // 3. Rate Mode Radio Buttons
+              _buildPriceModeRadio(isDark),
+              const SizedBox(height: AppConstants.spaceL),
+
               Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Expanded(
                     child: _buildField(
-                      AppStrings.listItemName,
-                      _nameController,
-                      AppStrings.listItemHint,
+                      "ITEM RATE (₹)",
+                      _priceController,
+                      "e.g. 70",
                       isDark,
                       bgColor,
-                      node: _nameNode,
-                      isText: true,
+                      node: _priceNode,
                     ),
                   ),
                   const SizedBox(width: AppConstants.spaceM),
-                  Expanded(child: _buildDatePickerField(isDark, bgColor)),
-                ],
-              ),
-              const SizedBox(height: AppConstants.spaceL),
-              Row(
-                children: [
                   Expanded(
                     child: _buildField(
                       AppStrings.listQty,
@@ -861,42 +1024,48 @@ class AddItemModalState extends State<AddItemModal> {
                       node: _qtyNode,
                     ),
                   ),
-                  const SizedBox(width: AppConstants.spaceM),
-                  Expanded(child: _buildDropdown(isDark, bgColor)),
                 ],
               ),
               const SizedBox(height: AppConstants.spaceL),
+
               Row(
                 children: [
                   Expanded(
-                    child: _buildField(
-                      AppStrings.listUnitPrice,
-                      _priceController,
-                      AppStrings.listPriceHint,
-                      isDark,
-                      bgColor,
-                      node: _priceNode,
-                    ),
-                  ),
-                  const SizedBox(width: AppConstants.spaceM),
-                  Expanded(
-                    child: Stack(
-                      alignment: Alignment.centerRight,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildField(
-                          AppStrings.listDiscount,
-                          _discountController,
-                          AppStrings.listDiscountHint,
-                          isDark,
-                          bgColor,
-                          node: _disNode,
+                        const Text(
+                          "FIXED DISCOUNT",
+                          style: TextStyle(
+                            fontSize: AppConstants.fontSizeS,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.textMuted,
+                          ),
                         ),
-                        Positioned(right: 8, bottom: 8, child: _buildToggle()),
+                        const SizedBox(height: 6),
+                        Stack(
+                          alignment: Alignment.centerRight,
+                          children: [
+                            _buildField(
+                              "",
+                              _discountController,
+                              "0",
+                              isDark,
+                              bgColor,
+                              node: _disNode,
+                              showLabel: false,
+                            ),
+                            Positioned(right: 8, bottom: 8, child: _buildToggle()),
+                          ],
+                        ),
                       ],
                     ),
                   ),
                 ],
               ),
+              const SizedBox(height: AppConstants.spaceL),
+              _buildQuickUnits(isDark, bgColor),
+              
               const SizedBox(height: AppConstants.spaceXXL),
 
               // Error feedback
@@ -974,21 +1143,24 @@ class AddItemModalState extends State<AddItemModal> {
     Color bgColor, {
     required FocusNode node,
     bool isText = false,
+    bool showLabel = true,
+    bool enabled = true,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: AppConstants.fontSizeS,
-            fontWeight: FontWeight.bold,
-            color: AppColors.textMuted,
+        if (showLabel)
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: AppConstants.fontSizeS,
+              fontWeight: FontWeight.bold,
+              color: AppColors.textMuted,
+            ),
           ),
-        ),
-        const SizedBox(height: 6),
+        if (showLabel) const SizedBox(height: 6),
         GestureDetector(
-          onTap: () => node.requestFocus(),
+          onTap: () => enabled ? node.requestFocus() : null,
           child: AnimatedContainer(
             duration: AppConstants.animationDurationSmall,
             height: isText ? null : AppConstants.fieldHeight,
@@ -996,20 +1168,21 @@ class AddItemModalState extends State<AddItemModal> {
               horizontal: AppConstants.spaceL,
             ),
             decoration: BoxDecoration(
-              color: bgColor,
+              color: enabled ? bgColor : (isDark ? Colors.grey.withValues(alpha: 0.1) : Colors.grey.shade100),
               borderRadius: BorderRadius.circular(AppConstants.borderRadiusM),
               border: Border.all(
-                color: node.hasFocus
+                color: node.hasFocus && enabled
                     ? AppColors.primaryList
                     : (isDark
                           ? AppColors.white.withValues(alpha: 0.05)
                           : AppColors.accentMuted),
-                width: node.hasFocus ? 2 : 1,
+                width: node.hasFocus && enabled ? 2 : 1,
               ),
             ),
             child: TextField(
               controller: ctrl,
               focusNode: node,
+              enabled: enabled,
               keyboardType: isText
                   ? TextInputType.multiline
                   : TextInputType.number,
@@ -1042,124 +1215,6 @@ class AddItemModalState extends State<AddItemModal> {
     );
   }
 
-  /// Helper for building date picker field for selecting entry date.
-  Widget _buildDatePickerField(bool isDark, Color bgColor) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          "DATE",
-          style: TextStyle(
-            fontSize: AppConstants.fontSizeS,
-            fontWeight: FontWeight.bold,
-            color: AppColors.textMuted,
-          ),
-        ),
-        const SizedBox(height: 6),
-        GestureDetector(
-          onTap: () async {
-            final picked = await showDatePicker(
-              context: context,
-              initialDate: _selectedDate,
-              firstDate: DateTime(2020),
-              lastDate: DateTime.now(),
-              builder: (ctx, child) => Theme(
-                data: Theme.of(ctx).copyWith(
-                  colorScheme: isDark
-                      ? const ColorScheme.dark(primary: AppColors.primaryList)
-                      : const ColorScheme.light(primary: AppColors.primaryList),
-                ),
-                child: child!,
-              ),
-            );
-            if (!mounted) return;
-            if (picked != null) setState(() => _selectedDate = picked);
-          },
-          child: Container(
-            height: AppConstants.fieldHeight,
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppConstants.spaceL,
-            ),
-            decoration: BoxDecoration(
-              color: bgColor,
-              borderRadius: BorderRadius.circular(AppConstants.borderRadiusM),
-              border: Border.all(
-                color: isDark
-                    ? AppColors.white.withValues(alpha: 0.05)
-                    : AppColors.accentMuted,
-              ),
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.calendar_today,
-                  size: 16,
-                  color: isDark ? Colors.white70 : AppColors.textMuted,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  DateFormat('dd/MM/yyyy').format(_selectedDate),
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: isDark ? AppColors.white : AppColors.textDark,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  /// Helper for building the unit selection dropdown.
-  Widget _buildDropdown(bool isDark, Color bgColor) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          AppStrings.listUnitType,
-          style: TextStyle(
-            fontSize: AppConstants.fontSizeS,
-            fontWeight: FontWeight.bold,
-            color: AppColors.textMuted,
-          ),
-        ),
-        const SizedBox(height: 6),
-        Container(
-          height: AppConstants.fieldHeight,
-          padding: const EdgeInsets.symmetric(horizontal: AppConstants.spaceL),
-          decoration: BoxDecoration(
-            color: bgColor,
-            borderRadius: BorderRadius.circular(AppConstants.borderRadiusM),
-            border: Border.all(
-              color: isDark
-                  ? AppColors.white.withValues(alpha: 0.05)
-                  : AppColors.accentMuted,
-            ),
-          ),
-          child: DropdownButtonHideUnderline(
-            child: DropdownButton<String>(
-              value: _selectedUnit,
-              isExpanded: true,
-              dropdownColor: isDark ? AppColors.cardDark : AppColors.cardLight,
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: isDark ? AppColors.white : AppColors.textDark,
-              ),
-              items: AppStrings.unitOptions
-                  .map((u) => DropdownMenuItem(value: u, child: Text(u)))
-                  .toList(),
-              onChanged: (val) {
-                if (val != null) setState(() => _selectedUnit = val);
-                _validate();
-              },
-            ),
-          ),
-        ),
-      ],
-    );
-  }
 
   /// Helper for building the discount type toggle percentage vs currency.
   Widget _buildToggle() {
@@ -1177,18 +1232,272 @@ class AddItemModalState extends State<AddItemModal> {
         children: [
           _togglePart(
             AppStrings.calcPercentSymbol,
-            _isPercent,
+            _discountType == DiscountType.percentage,
             true,
-            () => setState(() => _isPercent = true),
+            () => setState(() => _discountType = DiscountType.percentage),
           ),
           _togglePart(
             AppStrings.calcRupeeSymbol,
-            !_isPercent,
+            _discountType == DiscountType.amount,
             false,
-            () => setState(() => _isPercent = false),
+            () => setState(() => _discountType = DiscountType.amount),
           ),
         ],
       ),
+    );
+  }
+
+  /// Modern date bar moved from the main screen into the modal.
+  Widget _buildModernDateBar(bool isDark) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: AppConstants.spaceL, vertical: 12),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.surface : Colors.grey.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: InkWell(
+        onTap: () async {
+          final picked = await showDatePicker(
+            context: context,
+            initialDate: _selectedDate,
+            firstDate: DateTime(2020),
+            lastDate: DateTime.now(),
+          );
+          if (picked != null) {
+            setState(() => _selectedDate = picked);
+          }
+        },
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.calendar_today, size: 18, color: AppColors.primaryAction),
+            const SizedBox(width: 12),
+            Text(
+              DateFormat('EEEE, MMMM d, y').format(_selectedDate),
+              style: GoogleFonts.spaceGrotesk(
+                fontSize: AppConstants.fontSizeM,
+                fontWeight: FontWeight.w600,
+                color: isDark ? Colors.white : AppColors.textDark,
+              ),
+            ),
+            const SizedBox(width: 8),
+            const Icon(Icons.arrow_drop_down, color: AppColors.textMuted),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCategoryChips(bool isDark, Color bgColor) {
+    final defaultCats = [
+      {'id': 'milk', 'name': 'Milk'},
+      {'id': 'veggies', 'name': 'Veggies'},
+      {'id': 'grocery', 'name': 'Grocery'},
+      {'id': 'custom', 'name': 'Custom'},
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          "CATEGORY",
+          style: TextStyle(
+            fontSize: AppConstants.fontSizeS,
+            fontWeight: FontWeight.bold,
+            color: AppColors.textMuted,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: defaultCats.map((cat) {
+            final isCustomTab = cat['id'] == 'custom';
+            final isSelected = _isCustomCategory ? isCustomTab : _selectedCategoryId == cat['id'];
+
+            return GestureDetector(
+              onTap: () {
+                if (isCustomTab) {
+                  setState(() => _isCustomCategory = true);
+                } else {
+                  setState(() {
+                    _isCustomCategory = false;
+                    _selectedCategoryId = cat['id']!;
+                  });
+                }
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                constraints: BoxConstraints(minWidth: isCustomTab ? 100 : 0),
+                decoration: BoxDecoration(
+                  color: isSelected ? AppColors.primaryAction : (isDark ? AppColors.cardDark : Colors.grey.shade200),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: isCustomTab && _isCustomCategory
+                    ? IntrinsicWidth(
+                        child: TextField(
+                          controller: _customCategoryController,
+                          autofocus: true,
+                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                          decoration: const InputDecoration(
+                            isDense: true,
+                            contentPadding: EdgeInsets.zero,
+                            border: InputBorder.none,
+                            hintText: "Shop Name",
+                            hintStyle: TextStyle(color: Colors.white70, fontSize: 13),
+                          ),
+                          onChanged: (_) => setState(() {}),
+                        ),
+                      )
+                    : Text(
+                        isCustomTab && _customCategoryController.text.isNotEmpty 
+                            ? _customCategoryController.text 
+                            : cat['name']!,
+                        style: TextStyle(
+                          color: isSelected ? Colors.white : (isDark ? Colors.white70 : Colors.black87),
+                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                          fontSize: 13,
+                        ),
+                      ),
+              ),
+            );
+          }).toList(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPriceModeRadio(bool isDark) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          "RATE MODE",
+          style: TextStyle(
+            fontSize: AppConstants.fontSizeS,
+            fontWeight: FontWeight.bold,
+            color: AppColors.textMuted,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            _radioOption("Flat Rate", PriceMode.flat),
+            const SizedBox(width: AppConstants.spaceL),
+            _radioOption("Per Unit", PriceMode.perUnit),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _radioOption(String label, PriceMode mode) {
+    final isSelected = _priceMode == mode;
+    return GestureDetector(
+      onTap: () => setState(() {
+        _priceMode = mode;
+        _validate();
+      }),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Radio<PriceMode>(
+            value: mode,
+            groupValue: _priceMode,
+            onChanged: (val) => setState(() {
+              _priceMode = val!;
+              _validate();
+            }),
+            activeColor: AppColors.primaryAction,
+            visualDensity: VisualDensity.compact,
+          ),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              color: isSelected ? AppColors.primaryAction : AppColors.textMuted,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildQuickUnits(bool isDark, Color bgColor) {
+    final units = ['Gram', 'Kg', 'Ltr', 'ML', 'Dozen', 'Piece', 'Packet', 'Custom'];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          "QUANTITY UNIT",
+          style: TextStyle(
+            fontSize: AppConstants.fontSizeS,
+            fontWeight: FontWeight.bold,
+            color: AppColors.textMuted,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: units.map((u) {
+            final isCustomTab = u == 'Custom';
+            final isSelected = _isCustomUnit ? isCustomTab : _selectedUnit == u;
+
+            return GestureDetector(
+              onTap: () {
+                if (isCustomTab) {
+                  setState(() => _isCustomUnit = true);
+                } else {
+                  setState(() {
+                    _isCustomUnit = false;
+                    _selectedUnit = u;
+                  });
+                }
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                constraints: BoxConstraints(minWidth: isCustomTab ? 80 : 0),
+                decoration: BoxDecoration(
+                  color: isSelected ? AppColors.primaryList : bgColor,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: isSelected ? AppColors.primaryList : (isDark ? Colors.white10 : Colors.grey.shade300),
+                  ),
+                ),
+                child: isCustomTab && _isCustomUnit
+                    ? IntrinsicWidth(
+                        child: TextField(
+                          controller: _customUnitController,
+                          autofocus: true,
+                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                          decoration: const InputDecoration(
+                            isDense: true,
+                            contentPadding: EdgeInsets.zero,
+                            border: InputBorder.none,
+                            hintText: "Unit",
+                            hintStyle: TextStyle(color: Colors.white70, fontSize: 14),
+                          ),
+                          onChanged: (_) => setState(() {}),
+                        ),
+                      )
+                    : Text(
+                        isCustomTab && _customUnitController.text.isNotEmpty 
+                            ? _customUnitController.text 
+                            : u,
+                        style: TextStyle(
+                          color: isSelected ? Colors.white : (isDark ? Colors.white70 : Colors.black87),
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+              ),
+            );
+          }).toList(),
+        ),
+      ],
     );
   }
 
