@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/app_dimensions.dart';
+import '../../../../core/constants/app_strings.dart';
 import '../../../../core/services/data_service.dart';
 
 class DaySummaryScreen extends StatefulWidget {
@@ -51,35 +53,64 @@ class _DaySummaryScreenState extends State<DaySummaryScreen> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(icon: Icon(Icons.arrow_back_ios_new, color: isDark ? Colors.white : Colors.black), onPressed: () => Navigator.pop(context)),
-        title: Text('DAY BREAKDOWN', style: GoogleFonts.jetBrainsMono(fontWeight: FontWeight.bold, fontSize: 16, color: AppColors.primaryGreen)),
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_ios_new, color: isDark ? AppColors.white : Colors.black),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: Text(
+          AppStrings.summaryDayBreakdown,
+          style: TextStyle(fontFamily: 'JetBrainsMono', 
+            fontWeight: FontWeight.bold,
+            fontSize: AppDimensions.fontTitleS,
+            color: AppColors.primaryGreen,
+          ),
+        ),
         centerTitle: true,
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingXL, vertical: AppDimensions.paddingM),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Center(child: Text(widget.date != null ? 'SHOPPING ON ${widget.date!.day}/${widget.date!.month}/${widget.date!.year}' : 'CURRENT SESSION', 
-              style: GoogleFonts.dmSans(fontSize: 10, fontWeight: FontWeight.w900, color: Colors.grey, letterSpacing: 1.2))),
-            const SizedBox(height: 20),
+            Center(
+              child: Text(
+                widget.date != null
+                    ? 'SHOPPING ON ${widget.date!.day}/${widget.date!.month}/${widget.date!.year}'
+                    : 'CURRENT SESSION',
+                style: TextStyle(fontFamily: 'DMSans', 
+                  fontSize: AppDimensions.fontXS,
+                  fontWeight: FontWeight.w900,
+                  color: AppColors.neutralText,
+                  letterSpacing: 1.2,
+                ),
+              ),
+            ),
+            const SizedBox(height: AppDimensions.paddingXL),
             
             _buildGrandTotalCard(isDark),
-            const SizedBox(height: 20),
+            const SizedBox(height: AppDimensions.paddingXL),
             
             _buildStoreOfferSection(isDark),
-            const SizedBox(height: 20),
+            const SizedBox(height: AppDimensions.paddingXL),
             
             _buildSavingsSplit(isDark),
-            const SizedBox(height: 30),
+            const SizedBox(height: AppDimensions.paddingXXL),
             
-            Text('CATEGORY SPEND', style: GoogleFonts.dmSans(fontSize: 10, fontWeight: FontWeight.w900, color: Colors.grey, letterSpacing: 1.5)),
-            const SizedBox(height: 12),
+            Text(
+              AppStrings.summaryCategorySpend,
+              style: TextStyle(fontFamily: 'DMSans', 
+                fontSize: AppDimensions.fontXS,
+                fontWeight: FontWeight.w900,
+                color: AppColors.neutralText,
+                letterSpacing: 1.5,
+              ),
+            ),
+            const SizedBox(height: AppDimensions.paddingM),
             ...groups.entries.map((e) => _buildCategoryRow(e.key, e.value, isDark)),
             
-            const SizedBox(height: 40),
+            const SizedBox(height: AppDimensions.paddingXXXL),
             _buildDoneButton(isDark),
-            const SizedBox(height: 40),
+            const SizedBox(height: AppDimensions.paddingXXXL),
           ],
         ),
       ),
@@ -89,29 +120,61 @@ class _DaySummaryScreenState extends State<DaySummaryScreen> {
   Widget _buildGrandTotalCard(bool isDark) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(32),
+      padding: const EdgeInsets.all(AppDimensions.paddingXXL),
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusXL + 4),
         boxShadow: isDark ? null : [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 40, offset: const Offset(0, 10))],
       ),
       child: Column(
         children: [
-          Text('NET PAYABLE', style: GoogleFonts.dmSans(fontSize: 11, fontWeight: FontWeight.w800, color: Colors.grey, letterSpacing: 2)),
-          const SizedBox(height: 12),
+          Text(
+            AppStrings.summaryNetPayable,
+            style: TextStyle(fontFamily: 'DMSans', 
+              fontSize: AppDimensions.fontS - 1,
+              fontWeight: FontWeight.w800,
+              color: AppColors.neutralText,
+              letterSpacing: 2,
+            ),
+          ),
+          const SizedBox(height: AppDimensions.paddingM),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text('₹', style: GoogleFonts.jetBrainsMono(fontSize: 32, fontWeight: FontWeight.bold, color: AppColors.primaryGreen)),
-              Text(dataService.finalTotalValue.toStringAsFixed(0), style: GoogleFonts.jetBrainsMono(fontSize: 56, fontWeight: FontWeight.w900, color: AppColors.primaryGreen)),
+              Text(
+                '₹',
+                style: TextStyle(fontFamily: 'JetBrainsMono', 
+                  fontSize: AppDimensions.fontTitleXXL,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.primaryGreen,
+                ),
+              ),
+              Text(
+                dataService.finalTotalValue.toStringAsFixed(0),
+                style: TextStyle(fontFamily: 'JetBrainsMono', 
+                  fontSize: 56,
+                  fontWeight: FontWeight.w900,
+                  color: AppColors.primaryGreen,
+                ),
+              ),
             ],
           ),
           if (dataService.storeDiscountAmount > 0)
             Container(
-              margin: const EdgeInsets.only(top: 16),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-              decoration: BoxDecoration(color: AppColors.greenTint.withValues(alpha: isDark ? 0.1 : 1), borderRadius: BorderRadius.circular(10)),
-              child: Text('Store Offer: -₹${dataService.storeDiscountAmount.toStringAsFixed(0)}', style: GoogleFonts.dmSans(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.darkGreen)),
+              margin: const EdgeInsets.only(top: AppDimensions.paddingL),
+              padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingM, vertical: 6),
+              decoration: BoxDecoration(
+                color: AppColors.greenTint.withValues(alpha: isDark ? 0.1 : 1),
+                borderRadius: BorderRadius.circular(AppDimensions.radiusM),
+              ),
+              child: Text(
+                'Store Offer: -₹${dataService.storeDiscountAmount.toStringAsFixed(0)}',
+                style: TextStyle(fontFamily: 'DMSans', 
+                  fontSize: AppDimensions.fontS,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.darkGreen,
+                ),
+              ),
             ),
         ],
       ),
@@ -120,10 +183,10 @@ class _DaySummaryScreenState extends State<DaySummaryScreen> {
 
   Widget _buildStoreOfferSection(bool isDark) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(AppDimensions.paddingXL),
       decoration: BoxDecoration(
         color: isDark ? Colors.white.withValues(alpha: 0.03) : Colors.white, 
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusL),
         border: Border.all(color: Colors.orange.withValues(alpha: 0.2)),
       ),
       child: Column(
@@ -132,42 +195,56 @@ class _DaySummaryScreenState extends State<DaySummaryScreen> {
           Row(
             children: [
               const Icon(Icons.stars, color: Colors.orange, size: 16),
-              const SizedBox(width: 8),
-              Text('STORE-WIDE OFFER', style: GoogleFonts.dmSans(fontSize: 10, fontWeight: FontWeight.w900, color: Colors.orange)),
+              const SizedBox(width: AppDimensions.paddingS),
+              Text(
+                AppStrings.summaryStoreWideOffer,
+                style: TextStyle(fontFamily: 'DMSans', 
+                  fontSize: AppDimensions.fontXS,
+                  fontWeight: FontWeight.w900,
+                  color: Colors.orange,
+                ),
+              ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppDimensions.paddingL),
           Row(
             children: [
-              Text('Spend over ₹', style: GoogleFonts.dmSans(fontSize: 13, fontWeight: FontWeight.w500)),
+              Text(AppStrings.summarySpendOver, style: TextStyle(fontFamily: 'DMSans', fontSize: AppDimensions.fontS + 1, fontWeight: FontWeight.w500)),
               SizedBox(
                 width: 65,
                 child: TextField(
                   controller: _thresholdController,
                   keyboardType: TextInputType.number,
-                  style: GoogleFonts.jetBrainsMono(fontSize: 15, fontWeight: FontWeight.bold),
+                  style: TextStyle(fontFamily: 'JetBrainsMono', fontSize: AppDimensions.fontM, fontWeight: FontWeight.bold),
                   decoration: const InputDecoration(isDense: true, border: InputBorder.none, hintText: '0'),
                   onChanged: (_) => _updateStoreOffer(),
                 ),
               ),
-              Text(' get ', style: GoogleFonts.dmSans(fontSize: 13, fontWeight: FontWeight.w500)),
+              Text(AppStrings.summaryGet, style: TextStyle(fontFamily: 'DMSans', fontSize: AppDimensions.fontS + 1, fontWeight: FontWeight.w500)),
               SizedBox(
                 width: 45,
                 child: TextField(
                   controller: _percentController,
                   keyboardType: TextInputType.number,
-                  style: GoogleFonts.jetBrainsMono(fontSize: 15, fontWeight: FontWeight.bold),
+                  style: TextStyle(fontFamily: 'JetBrainsMono', fontSize: AppDimensions.fontM, fontWeight: FontWeight.bold),
                   decoration: const InputDecoration(isDense: true, border: InputBorder.none, hintText: '0'),
                   onChanged: (_) => _updateStoreOffer(),
                 ),
               ),
-              Text('% OFF', style: GoogleFonts.dmSans(fontSize: 13, fontWeight: FontWeight.w900, color: Colors.orange)),
+              Text(AppStrings.summaryOff, style: TextStyle(fontFamily: 'DMSans', fontSize: AppDimensions.fontS + 1, fontWeight: FontWeight.w900, color: Colors.orange)),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: AppDimensions.paddingM),
           const Divider(height: 1),
-          const SizedBox(height: 10),
-          Text('Applied globally on the final subtotal.', style: GoogleFonts.dmSans(fontSize: 10, fontStyle: FontStyle.italic, color: Colors.grey)),
+          const SizedBox(height: AppDimensions.paddingM),
+          Text(
+            AppStrings.summaryAppliedGlobally,
+            style: TextStyle(fontFamily: 'DMSans', 
+              fontSize: AppDimensions.fontXS,
+              fontStyle: FontStyle.italic,
+              color: AppColors.neutralText,
+            ),
+          ),
         ],
       ),
     );
@@ -177,11 +254,21 @@ class _DaySummaryScreenState extends State<DaySummaryScreen> {
     return Row(
       children: [
         Expanded(
-          child: _buildSavingsCard('SUBTOTAL', '₹${dataService.subtotal.toStringAsFixed(0)}', isDark ? Colors.white70 : Colors.black87, isDark),
+          child: _buildSavingsCard(
+            AppStrings.listSubtotalSavings.split(' ').first,
+            '₹${dataService.subtotal.toStringAsFixed(0)}',
+            isDark ? AppColors.textLight.withValues(alpha: 0.7) : Colors.black87,
+            isDark,
+          ),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: AppDimensions.paddingM),
         Expanded(
-          child: _buildSavingsCard('YOU SAVED', '₹${dataService.totalSavings.toStringAsFixed(0)}', AppColors.primaryGreen, isDark),
+          child: _buildSavingsCard(
+            AppStrings.historySaved.toUpperCase(),
+            '₹${dataService.totalSavings.toStringAsFixed(0)}',
+            AppColors.primaryGreen,
+            isDark,
+          ),
         ),
       ],
     );
@@ -189,14 +276,22 @@ class _DaySummaryScreenState extends State<DaySummaryScreen> {
 
   Widget _buildSavingsCard(String title, String val, Color valCol, bool isDark) {
     return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(color: Theme.of(context).cardColor, borderRadius: BorderRadius.circular(18)),
+      padding: const EdgeInsets.all(AppDimensions.paddingXL),
+      decoration: BoxDecoration(color: Theme.of(context).cardColor, borderRadius: BorderRadius.circular(AppDimensions.radiusL)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: GoogleFonts.dmSans(fontSize: 9, fontWeight: FontWeight.w900, color: Colors.grey, letterSpacing: 1)),
+          Text(
+            title,
+            style: TextStyle(fontFamily: 'DMSans', 
+              fontSize: AppDimensions.fontS - 3,
+              fontWeight: FontWeight.w900,
+              color: AppColors.neutralText,
+              letterSpacing: 1,
+            ),
+          ),
           const SizedBox(height: 6),
-          Text(val, style: GoogleFonts.jetBrainsMono(fontSize: 20, fontWeight: FontWeight.w900, color: valCol)),
+          Text(val, style: TextStyle(fontFamily: 'JetBrainsMono', fontSize: AppDimensions.fontTitleL, fontWeight: FontWeight.w900, color: valCol)),
         ],
       ),
     );
@@ -206,11 +301,11 @@ class _DaySummaryScreenState extends State<DaySummaryScreen> {
     double catTotal = items.fold(0.0, (sum, it) => sum + (it.itemAfterVendorDiscount as num).toDouble());
     
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
+      margin: const EdgeInsets.only(bottom: AppDimensions.paddingS),
+      padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingL, vertical: AppDimensions.paddingM + 3),
       decoration: BoxDecoration(
         color: isDark ? Colors.white.withValues(alpha: 0.03) : Colors.white, 
-        borderRadius: BorderRadius.circular(14)
+        borderRadius: BorderRadius.circular(AppDimensions.radiusL)
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -218,11 +313,11 @@ class _DaySummaryScreenState extends State<DaySummaryScreen> {
           Row(
             children: [
               Text(_getEmojiForCategory(name), style: const TextStyle(fontSize: 20)),
-              const SizedBox(width: 12),
-              Text(name, style: GoogleFonts.dmSans(fontSize: 13, fontWeight: FontWeight.w700)),
+              const SizedBox(width: AppDimensions.paddingM),
+              Text(name, style: TextStyle(fontFamily: 'DMSans', fontSize: AppDimensions.fontS + 1, fontWeight: FontWeight.w700)),
             ],
           ),
-          Text('₹${catTotal.toStringAsFixed(0)}', style: GoogleFonts.jetBrainsMono(fontSize: 15, fontWeight: FontWeight.w900)),
+          Text('₹${catTotal.toStringAsFixed(0)}', style: TextStyle(fontFamily: 'JetBrainsMono', fontSize: AppDimensions.fontM, fontWeight: FontWeight.w900)),
         ],
       ),
     );
@@ -244,11 +339,19 @@ class _DaySummaryScreenState extends State<DaySummaryScreen> {
         onPressed: () => Navigator.pop(context),
         style: ElevatedButton.styleFrom(
           backgroundColor: isDark ? AppColors.primaryGreen : Colors.black87, 
-          padding: const EdgeInsets.symmetric(vertical: 18), 
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          padding: const EdgeInsets.symmetric(vertical: AppDimensions.paddingXL), 
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.radiusL)),
           elevation: 0,
         ),
-        child: Text('RETURN TO LIST', style: GoogleFonts.dmSans(color: Colors.white, fontWeight: FontWeight.w900, letterSpacing: 1.5, fontSize: 13)),
+        child: Text(
+          AppStrings.summaryReturnToList,
+          style: TextStyle(fontFamily: 'DMSans', 
+            color: Colors.white,
+            fontWeight: FontWeight.w900,
+            letterSpacing: 1.5,
+            fontSize: AppDimensions.fontS + 1,
+          ),
+        ),
       ),
     );
   }

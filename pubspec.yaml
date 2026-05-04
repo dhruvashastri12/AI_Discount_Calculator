@@ -8,11 +8,8 @@ environment:
 
 dependencies:
   camera: ^0.12.0+1
-  dotted_border: 2.1.0
   flutter:
     sdk: flutter
-  google_fonts: ^8.0.2
-  google_mlkit_text_recognition: ^0.15.1
   image_picker: ^1.2.1
   intl: ^0.20.2
   json_annotation: ^4.11.0
@@ -39,4 +36,27 @@ flutter:
   uses-material-design: true
   assets:
     - assets/images/
+    - assets/
+    - assets/fonts/
 
+  fonts:
+    - family: DMSans
+      fonts:
+        - asset: assets/fonts/DMSans-Regular.ttf
+        - asset: assets/fonts/DMSans-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/DMSans-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/DMSans-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/DMSans-Black.ttf
+          weight: 900
+    - family: JetBrainsMono
+      fonts:
+        - asset: assets/fonts/JetBrainsMono-Regular.ttf
+        - asset: assets/fonts/JetBrainsMono-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/JetBrainsMono-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/JetBrainsMono-ExtraBold.ttf
+          weight: 800

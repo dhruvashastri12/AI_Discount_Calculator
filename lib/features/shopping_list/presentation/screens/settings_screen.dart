@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+
 import 'package:ai_discount_calculator/core/constants/app_colors.dart';
 import 'package:ai_discount_calculator/core/constants/app_strings.dart';
 import 'package:ai_discount_calculator/core/constants/app_constants.dart';
@@ -20,7 +20,8 @@ class SettingsScreen extends StatelessWidget {
         backgroundColor: Colors.transparent,
         title: Text(
           AppStrings.settingsTitle,
-          style: GoogleFonts.publicSans(
+          style: TextStyle(
+            fontFamily: 'DMSans',
             fontWeight: FontWeight.bold,
             color: isDark ? Colors.white : AppColors.textDark,
           ),

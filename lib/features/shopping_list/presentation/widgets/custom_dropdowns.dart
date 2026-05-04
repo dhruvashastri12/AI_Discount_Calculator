@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+
 import '../../../../core/constants/app_colors.dart';
 
 /// Central manager to ensure only one dropdown is open at a time.
@@ -149,7 +149,7 @@ class _CategorySelectorState extends State<CategorySelector> {
             Expanded(
               child: Text(
                 name,
-                style: GoogleFonts.dmSans(
+                style: TextStyle(fontFamily: 'DMSans', 
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
                   color: isDark ? Colors.white : AppColors.textDark,
@@ -183,10 +183,10 @@ class _CategorySelectorState extends State<CategorySelector> {
           const SizedBox(width: 8),
           Expanded(
             child: TextField(
-              style: GoogleFonts.dmSans(fontSize: 13, fontWeight: FontWeight.w500, color: isDark ? Colors.white : AppColors.textDark),
+              style: TextStyle(fontFamily: 'DMSans', fontSize: 13, fontWeight: FontWeight.w500, color: isDark ? Colors.white : AppColors.textDark),
               decoration: InputDecoration(
                 hintText: 'Type custom name...',
-                hintStyle: GoogleFonts.dmSans(color: AppColors.neutralText.withValues(alpha: 0.6), fontSize: 13),
+                hintStyle: TextStyle(fontFamily: 'DMSans', color: AppColors.neutralText.withValues(alpha: 0.6), fontSize: 13),
                 border: InputBorder.none,
                 isDense: true,
               ),
@@ -262,7 +262,7 @@ class _CategorySelectorState extends State<CategorySelector> {
             Text(
               name.split(' ').first,
               textAlign: TextAlign.center,
-              style: GoogleFonts.dmSans(
+              style: TextStyle(fontFamily: 'DMSans', 
                 fontSize: 8,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 0.2,
@@ -315,7 +315,7 @@ class _CategorySelectorState extends State<CategorySelector> {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.center,
-              style: GoogleFonts.dmSans(
+              style: TextStyle(fontFamily: 'DMSans', 
                 fontSize: 8,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 0.2,
@@ -401,7 +401,7 @@ class _UnitPickerPillState extends State<UnitPickerPill> {
                         widget.isGreen
                             ? "Vendor's unit"
                             : "Your unit",
-                        style: GoogleFonts.dmSans(fontSize: 10, color: AppColors.neutralText),
+                        style: TextStyle(fontFamily: 'DMSans', fontSize: 10, color: AppColors.neutralText),
                         textAlign: TextAlign.center,
                       ),
                     ],
@@ -466,7 +466,7 @@ class _UnitPickerPillState extends State<UnitPickerPill> {
         ),
         child: Text(
           u,
-          style: GoogleFonts.jetBrainsMono(
+          style: TextStyle(fontFamily: 'JetBrainsMono', 
             fontSize: 11,
             fontWeight: FontWeight.w700,
             color: textColor,
@@ -504,7 +504,7 @@ class _UnitPickerPillState extends State<UnitPickerPill> {
             children: [
               Text(
                 widget.unit,
-                style: GoogleFonts.jetBrainsMono(
+                style: TextStyle(fontFamily: 'JetBrainsMono', 
                   fontSize: 11,
                   fontWeight: FontWeight.w800,
                   color: textColor,

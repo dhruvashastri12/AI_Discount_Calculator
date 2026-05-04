@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+
 import 'package:ai_discount_calculator/core/constants/app_colors.dart';
 import 'package:ai_discount_calculator/core/constants/app_strings.dart';
 import 'package:ai_discount_calculator/core/constants/app_constants.dart';
@@ -103,7 +103,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
           children: [
             Text(
               AppStrings.calcFinalPrice,
-              style: GoogleFonts.dmSans(
+              style: TextStyle(fontFamily: 'DMSans', 
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
                 color: AppColors.textMuted,
@@ -117,7 +117,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                  padding: const EdgeInsets.symmetric(horizontal: 20),
                  child: Text(
                    "${AppStrings.calcRupeeSymbol}${payableAmount.toStringAsFixed(0)}",
-                   style: GoogleFonts.jetBrainsMono(
+                   style: TextStyle(fontFamily: 'JetBrainsMono', 
                      fontSize: 64,
                      fontWeight: FontWeight.w900,
                      color: AppColors.primaryGreen,
@@ -136,10 +136,10 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text("SAVED ", style: GoogleFonts.dmSans(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.textMuted)),
+                  Text("SAVED ", style: TextStyle(fontFamily: 'DMSans', fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.textMuted)),
                   Text(
                     "${AppStrings.calcRupeeSymbol}${savedAmount.toStringAsFixed(0)}", 
-                    style: GoogleFonts.jetBrainsMono(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.success)
+                    style: TextStyle(fontFamily: 'JetBrainsMono', fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.success)
                   ),
                 ],
               ),
@@ -211,7 +211,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label.toUpperCase(), style: GoogleFonts.dmSans(fontSize: 10, fontWeight: FontWeight.bold, color: active ? AppColors.primaryGreen : AppColors.neutralText)),
+          Text(label.toUpperCase(), style: TextStyle(fontFamily: 'DMSans', fontSize: 10, fontWeight: FontWeight.bold, color: active ? AppColors.primaryGreen : AppColors.neutralText)),
           const SizedBox(height: 6),
           Container(
             height: 55,
@@ -223,11 +223,11 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
             ),
             child: Row(
               children: [
-                if (unitPrefix) Text(unit, style: GoogleFonts.jetBrainsMono(color: AppColors.neutralText, fontSize: 16)),
+                if (unitPrefix) Text(unit, style: TextStyle(fontFamily: 'JetBrainsMono', color: AppColors.neutralText, fontSize: 16)),
                 Expanded(
-                  child: Text(value, style: GoogleFonts.jetBrainsMono(fontSize: 20, fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis),
+                  child: Text(value, style: TextStyle(fontFamily: 'JetBrainsMono', fontSize: 20, fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis),
                 ),
-                if (!unitPrefix) Text(unit, style: GoogleFonts.jetBrainsMono(color: AppColors.neutralText, fontSize: 16)),
+                if (!unitPrefix) Text(unit, style: TextStyle(fontFamily: 'JetBrainsMono', color: AppColors.neutralText, fontSize: 16)),
                 if (active) ...[const SizedBox(width: 4), _cursor()],
               ],
             ),
@@ -248,7 +248,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
         child: Container(
           decoration: BoxDecoration(color: active ? AppColors.primaryGreen : Colors.transparent, borderRadius: BorderRadius.circular(10)),
           alignment: Alignment.center,
-          child: Text(text, style: GoogleFonts.dmSans(color: active ? Colors.white : AppColors.neutralText, fontWeight: FontWeight.bold, fontSize: 12)),
+          child: Text(text, style: TextStyle(fontFamily: 'DMSans', color: active ? Colors.white : AppColors.neutralText, fontWeight: FontWeight.bold, fontSize: 12)),
         ),
       ),
     );
@@ -268,7 +268,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
           alignment: Alignment.center,
           child: isIcon 
             ? Icon(Icons.backspace_outlined, size: 20, color: isDark ? Colors.white : AppColors.textDark)
-            : Text(label, style: GoogleFonts.jetBrainsMono(fontSize: isAction ? 16 : 24, fontWeight: FontWeight.bold, color: label == "AC" ? AppColors.error : (isDark ? Colors.white : AppColors.textDark))),
+            : Text(label, style: TextStyle(fontFamily: 'JetBrainsMono', fontSize: isAction ? 16 : 24, fontWeight: FontWeight.bold, color: label == "AC" ? AppColors.error : (isDark ? Colors.white : AppColors.textDark))),
         ),
       ),
     );

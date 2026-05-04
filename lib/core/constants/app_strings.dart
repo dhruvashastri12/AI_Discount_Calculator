@@ -5,10 +5,10 @@ class AppStrings {
   static const String appName = "Stitch";
 
   // Navigation Tabs
-  static const String navLists = "Lists";
-  static const String navCalc = "Calc";
-  static const String navHistory = "History";
-  static const String navConv = "Conv";
+  static const String navCalc = "CALC";
+  static const String navList = "LIST";
+  static const String navHistory = "HISTORY";
+  static const String navConv = "CONV";
 
   // Discount Calculator
   static const String calcTitle = "DISCOUNT CALCULATOR";
@@ -16,8 +16,14 @@ class AppStrings {
   static const String calcDiscountPercent = "DISCOUNT %";
   static const String calcFinalPrice = "FINAL PRICE";
   static const String calcSavings = "YOU SAVE";
-  static const String calcRupeeSymbol = "₹";
   static const String calcPercentSymbol = "%";
+  static const String calcRupeeSymbol = "₹";
+  static const String calcPercentBtn = "PERCENT %";
+  static const String calcFlatBtn = "FLAT ₹";
+
+
+
+  static const String calcSavedLabel = "SAVED ";
 
   // Shopping List
   static const String listTitle = "CART ITEMS";
@@ -104,9 +110,70 @@ class AppStrings {
   static const String settingsVersionPrefix = "Antigravity FirstSync v";
   static const String settingsVersion = "1.1.0";
 
+  // History Additional
+  static const String historyAllTimeSummary = "ALL TIME SUMMARY";
+  static const String historyExpense = "EXPENSE";
+  static const String historySavings = "SAVINGS";
+  static const String historySpent = "Spent ";
+  static const String historyThisMonth = "THIS MONTH";
+  static const String historyPastMonth = "PAST MONTH";
+  static const String historyEmptyMsg = "No purchase history found";
+
+  // Summary / Day Breakdown
+  static const String summaryDayBreakdown = "DAY BREAKDOWN";
+  static const String summaryCategorySpend = "CATEGORY SPEND";
+  static const String summaryNetPayable = "NET PAYABLE";
+  static const String summaryStoreWideOffer = "STORE-WIDE OFFER";
+  static const String summarySpendOver = "Spend over ₹";
+  static const String summaryGet = " get ";
+  static const String summaryOff = "% OFF";
+  static const String summaryAppliedGlobally = "Applied globally on the final subtotal.";
+  static const String summaryReturnToList = "RETURN TO LIST";
+
+  // List Additional
+  static const String listSavedToday = "Saved ₹ today";
+  static const String listEmptyMsg = "Nothing in your list for this date.";
+  static const String listSavedBadge = "Saved ₹";
+
+  // Modal Additional
+  static const String modalItemTotal = "ITEM TOTAL";
+  static const String modalFinalItemTotal = "FINAL ITEM TOTAL";
+  static const String modalAfterVendorDiscount = "after vendor discount";
+  static const String modalVendorOff = "🤝 Vendor Off";
+  static const String modalVendorDiscount = "Vendor / Merchant Discount";
+  static const String modalPer = "per";
+  static const String modalItemName = "ITEM NAME";
+  static const String modalCategory = "CATEGORY";
+  static const String modalMarket = "MARKET";
+  static const String modalPriceMode = "PRICE MODE";
+  static const String modalFlatRate = "Flat Rate";
+  static const String modalPerUnit = "Per Unit";
+  static const String modalItemDiscount = "ITEM DISCOUNT";
+  static const String modalYouBought = "YOU BOUGHT";
+  static const String modalVendorRate = "VENDOR RATE";
+  static const String modalSuperMall = "Super Mall";
+  static const String modalLocalMarket = "Local Market";
+  static const String modalTapToChange = "Tap to change";
+  static const String modalToday = "TODAY";
+  static const String modalEnterItemName = "Enter item name...";
+  static const String modalTotalAmount = "Total Amount";
+  static const String modalRatePerUnit = "Rate per kg/ltr";
+  static const String modalEditItem = "EDIT ITEM";
+  static const String modalAddItem = "ADD ITEM";
+  static const String modalBtnUpdate = "Update Item";
+  static const String modalBtnAdd = "＋ Add Item";
+
+  // Dialogs Additional
+  static const String dialogConfirmDelete = "Confirm Delete";
+  static const String dialogDeleteMsg = "Are you sure you want to delete this item?";
+  static const String dialogDeleteWarning = "Deleted entries cant be retrived back.";
+  static const String dialogDeleteHistoryTitle = "Delete from History?";
+  static const String dialogDeleteHistoryMsg = "Do you also want to delete the entry from History tab?";
+
   // Date Formats (templates)
   static const String formatFullDayDate = "EEEE, MMM d";
   static const String formatMonthYear = "MMMM yyyy";
+  static const String formatShortDate = "dd MMM yyyy";
 
   // Icon Keywords
   static const String keywordApple = "apple";

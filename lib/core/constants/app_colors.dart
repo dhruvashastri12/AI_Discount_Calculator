@@ -56,4 +56,33 @@ class AppColors {
   static const Color error = Color(0xFFE53E3E);
   static const Color warning = Color(0xFFECC94B);
   static const Color shadow = Color(0x1A000000);
+
+  // Feature Specific - Navigation
+  static const Color navActiveAmber = Color(0xFFFFC107);
+
+  // Feature Specific - History
+  static const Color offWhite = Color(0xFFF7F8FA);
+  static const Color monthlyCardBorder = Color(0xFFFFD54F);
+  static const Color monthlyCardBG = Color(0xFFFFFCF0);
+
+  // Feature Specific - Shopping List & Item Card
+  static const Color dividerGrey = Color(0xFFEEEEEE);
+  static const Color categoryIconBG = Color(0xFFE3F2FD);
+  static const Color vendorBG = Color(0xFFFFFBEB);
+  static const Color vendorText = Color(0xFF92400E);
+
+  // Feature Specific - Add Item Modal
+  static const Color warningBG = Color(0xFFFFF3E0);
+  static const Color warningBorder = Color(0xFFFFB74D);
+  static const Color warningText = Color(0xFFE65100);
+  static const Color vendorOffBG = Color(0xFFFEFCE8);
+  static const Color vendorOffBorder = Color(0xFFFDE047);
+  static const Color vendorOffLabel = Color(0xFF854D0E);
+  static const Color finalTotalValue = Color(0xFFFDE047);
+
+  // Gradients
+  static const Color gradientItemTotalStart = Color(0xFF2D5A27);
+  static const Color gradientItemTotalEnd = Color(0xFF1E3A1A);
+  static const Color gradientFinalTotalStart = Color(0xFF92400E);
+  static const Color gradientFinalTotalEnd = Color(0xFF78350F);
 }

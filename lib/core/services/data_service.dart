@@ -1,3 +1,4 @@
+// lib/core/services/data_service.dart
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -30,35 +31,35 @@ class DataService extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Reset the service state (useful for testing and data clearing)
+  void clear() {
+    _allItems.clear();
+    _storeThreshold = 0;
+    _storePercentage = 0;
+    _saveAll();
+    notifyListeners();
+  }
+
   /// Returns items for the most recent date that has entries, or empty list.
-  /// If today has items, returns today's items.
-  /// Newest items at the top.
   List<CartItem> get currentItems {
     if (_allItems.isEmpty) return [];
 
-    // Find the most recent date available in the list
     List<CartItem> sortedAll = List.from(_allItems);
     sortedAll.sort((a, b) {
       int comp = b.date.compareTo(a.date);
-      if (comp == 0) {
-        // If same date, newest on top (assuming IDs are sequential or just use index)
-        // For simplicity, let's just stick to the order they were added if same date
-        return 0; 
-      }
+      if (comp == 0) return 0;
       return comp;
     });
 
     DateTime latestDate = sortedAll.first.date;
     DateTime latestDay = DateTime(latestDate.year, latestDate.month, latestDate.day);
 
-    // Filter items belonging to that latest day
     return sortedAll.where((item) {
       DateTime itemDay = DateTime(item.date.year, item.date.month, item.date.day);
       return itemDay.isAtSameMomentAs(latestDay);
     }).toList();
   }
 
-  /// Get all history grouped by date
   Map<DateTime, List<CartItem>> get historyByDate {
     Map<DateTime, List<CartItem>> grouped = {};
     for (var item in _allItems) {
@@ -101,7 +102,6 @@ class DataService extends ChangeNotifier {
   double get allTimeSavings => _allItems.fold(0, (sum, it) => sum + it.totalSavings);
 
   void addItem(CartItem item) {
-    // Insert at start for descending order in same-date scenarios if needed
     _allItems.insert(0, item);
     _saveAll();
     notifyListeners();

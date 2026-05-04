@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+
 import 'package:ai_discount_calculator/core/constants/app_colors.dart';
 import 'package:ai_discount_calculator/core/constants/app_strings.dart';
 import 'package:ai_discount_calculator/core/constants/app_constants.dart';
@@ -38,7 +38,8 @@ class ConversionScreen extends StatelessWidget {
             // Major notice text
             Text(
               AppStrings.convComingSoon,
-              style: GoogleFonts.spaceGrotesk(
+              style: TextStyle(
+                fontFamily: 'DMSans',
                 fontSize: AppConstants.fontSizeXXL + 2,
                 fontWeight: FontWeight.bold,
                 color: isDark ? AppColors.white : AppColors.textDark,

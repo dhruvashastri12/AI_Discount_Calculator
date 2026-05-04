@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+
 import 'package:ai_discount_calculator/features/discount_calculator/presentation/screens/calculator_screen.dart';
 import 'package:ai_discount_calculator/features/shopping_list/presentation/screens/shopping_list_screen.dart';
 import 'package:ai_discount_calculator/features/shopping_list/presentation/screens/history_screen.dart';
 import 'package:ai_discount_calculator/features/shopping_list/presentation/screens/conversion_screen.dart';
 import 'package:ai_discount_calculator/core/constants/app_colors.dart';
+import 'package:ai_discount_calculator/core/constants/app_dimensions.dart';
+import 'package:ai_discount_calculator/core/constants/app_strings.dart';
 import 'package:ai_discount_calculator/main.dart';
 
 class MainNavigationScreen extends StatefulWidget {
@@ -52,9 +54,9 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       centerTitle: true,
       automaticallyImplyLeading: false,
       title: Text(
-        'AI DISCOUNT CALCULATOR',
-        style: GoogleFonts.jetBrainsMono(
-          fontSize: 16,
+        AppStrings.calcTitle,
+        style: TextStyle(fontFamily: 'JetBrainsMono', 
+          fontSize: AppDimensions.fontTitleS,
           fontWeight: FontWeight.w900,
           color: isDark ? Colors.white : AppColors.textDark,
           letterSpacing: 1,
@@ -67,10 +69,10 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           },
           icon: Icon(
             isDark ? Icons.light_mode : Icons.dark_mode,
-            color: isDark ? const Color(0xFFFFC107) : AppColors.textDark,
+            color: isDark ? AppColors.navActiveAmber : AppColors.textDark,
           ),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: AppDimensions.paddingS),
       ],
     );
   }
@@ -80,20 +82,24 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.05), blurRadius: 10, offset: const Offset(0, -2))
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, -2),
+          )
         ],
       ),
       padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).padding.bottom + 8, 
-        top: 12
+        bottom: MediaQuery.of(context).padding.bottom + AppDimensions.paddingS, 
+        top: AppDimensions.paddingM + 2,
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _navItem(Icons.calculate, 'Calc', 0, isDark),
-          _navItem(Icons.shopping_cart, 'List', 1, isDark),
-          _navItem(Icons.history, 'History', 2, isDark),
-          _navItem(Icons.compare_arrows, 'Conv', 3, isDark),
+          _navItem(Icons.calculate, AppStrings.navCalc, 0, isDark),
+          _navItem(Icons.shopping_cart, AppStrings.navList, 1, isDark),
+          _navItem(Icons.history, AppStrings.navHistory, 2, isDark),
+          _navItem(Icons.compare_arrows, AppStrings.navConv, 3, isDark),
         ],
       ),
     );
@@ -118,8 +124,8 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             ),
             const SizedBox(height: 4),
             Text(
-              label.toUpperCase(),
-              style: GoogleFonts.dmSans(
+              label,
+              style: TextStyle(fontFamily: 'DMSans', 
                 fontSize: 9,
                 fontWeight: FontWeight.w900,
                 color: isActive ? activeColor : AppColors.neutralText,
