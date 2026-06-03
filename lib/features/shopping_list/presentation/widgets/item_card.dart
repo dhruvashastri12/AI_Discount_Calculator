@@ -66,7 +66,7 @@ class ItemCard extends StatelessWidget {
                                 style: TextStyle(fontFamily: 'DMSans', 
                                   fontWeight: FontWeight.w900, 
                                   fontSize: AppDimensions.fontXXL, 
-                                  color: AppColors.textDark,
+                                  color: isDark ? Colors.white : AppColors.textDark,
                                 ),
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -186,17 +186,17 @@ class ItemCard extends StatelessWidget {
             ),
             child: Column(
               children: [
-                _buildDetailRow('Mode', item.priceMode == PriceMode.flatRate ? '💰 Flat Rate' : '📐 Per Unit'),
-                _buildDetailRow('Market', item.marketType == 'Local' ? '🏘️ Local Market' : '🏢 Super Mall'),
-                if (formula != null) _buildDetailRow('Calculation', formula),
+                _buildDetailRow(context, AppStrings.labelMode, item.priceMode == PriceMode.flatRate ? '💰 Flat Rate' : '📐 Per Unit'),
+                _buildDetailRow(context, AppStrings.labelMarket, item.marketType == 'Local' ? '🏘️ Local Market' : '🏢 Super Mall'),
+                if (formula != null) _buildDetailRow(context, AppStrings.labelCalculation, formula),
                 if (item.discountValue > 0)
-                  _buildDetailRow('Item Off', item.discountType == DiscountType.percentage ? '${item.discountValue.toStringAsFixed(0)}%' : '₹${item.discountValue.toStringAsFixed(0)}'),
+                  _buildDetailRow(context, AppStrings.labelItemOff, item.discountType == DiscountType.percentage ? '${item.discountValue.toStringAsFixed(0)}%' : '₹${item.discountValue.toStringAsFixed(0)}'),
                 if (item.vendorDiscountValue > 0)
-                  _buildDetailRow('Vendor Off', item.vendorDiscountType == DiscountType.percentage ? '${item.vendorDiscountValue.toStringAsFixed(0)}%' : '₹${item.vendorDiscountValue.toStringAsFixed(0)}'),
+                  _buildDetailRow(context, AppStrings.labelVendorOff, item.vendorDiscountType == DiscountType.percentage ? '${item.vendorDiscountValue.toStringAsFixed(0)}%' : '₹${item.vendorDiscountValue.toStringAsFixed(0)}'),
                 const Divider(height: AppDimensions.paddingL, color: AppColors.dividerGrey),
-                _buildDetailRow('Original Price', '₹${item.itemFinalPrice.toStringAsFixed(2)}'),
-                _buildDetailRow('Paid Amount', '₹${item.itemAfterVendorDiscount.toStringAsFixed(2)}', isBold: true, color: AppColors.primaryGreen),
-                _buildDetailRow('Total Savings', '₹${item.totalSavings.toStringAsFixed(2)}', isBold: true, color: Colors.orange[800]),
+                _buildDetailRow(context, AppStrings.labelOriginalPrice, '₹${item.itemFinalPrice.toStringAsFixed(2)}'),
+                _buildDetailRow(context, AppStrings.labelPaidAmount, '₹${item.itemAfterVendorDiscount.toStringAsFixed(2)}', isBold: true, color: AppColors.primaryGreen),
+                _buildDetailRow(context, AppStrings.labelTotalSavings, '₹${item.totalSavings.toStringAsFixed(2)}', isBold: true, color: isDark ? Colors.orange[300] : Colors.orange[800]),
               ],
             ),
           ),
@@ -205,14 +205,15 @@ class ItemCard extends StatelessWidget {
     );
   }
 
-  Widget _buildDetailRow(String label, String value, {bool isBold = false, Color? color}) {
+  Widget _buildDetailRow(BuildContext context, String label, String value, {bool isBold = false, Color? color}) {
+    bool isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 3),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: TextStyle(fontFamily: 'DMSans', fontSize: AppDimensions.fontS, fontWeight: FontWeight.bold, color: Colors.grey[600])),
-          Text(value, style: TextStyle(fontFamily: 'JetBrainsMono', fontSize: AppDimensions.fontS, fontWeight: isBold ? FontWeight.w900 : FontWeight.w600, color: color ?? Colors.black87)),
+          Text(label, style: TextStyle(fontFamily: 'DMSans', fontSize: AppDimensions.fontS, fontWeight: FontWeight.bold, color: isDark ? Colors.grey[400] : Colors.grey[600])),
+          Text(value, style: TextStyle(fontFamily: 'JetBrainsMono', fontSize: AppDimensions.fontS, fontWeight: isBold ? FontWeight.w900 : FontWeight.w600, color: color ?? (isDark ? Colors.white.withValues(alpha: 0.87) : Colors.black.withValues(alpha: 0.87)))),
         ],
       ),
     );

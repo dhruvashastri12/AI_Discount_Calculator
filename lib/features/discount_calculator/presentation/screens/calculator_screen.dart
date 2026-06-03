@@ -110,7 +110,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                 letterSpacing: 2,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 4),
             FittedBox(
                fit: BoxFit.scaleDown,
                child: Padding(
@@ -119,13 +119,14 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                    "${AppStrings.calcRupeeSymbol}${payableAmount.toStringAsFixed(0)}",
                    style: TextStyle(fontFamily: 'JetBrainsMono', 
                      fontSize: 64,
-                     fontWeight: FontWeight.w900,
+                     fontWeight: FontWeight.w700,
                      color: AppColors.primaryGreen,
+                     letterSpacing: -1.0,
                    ),
                  ),
                ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(

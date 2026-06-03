@@ -40,7 +40,7 @@ class PriceDisplay extends StatelessWidget {
           style: TextStyle(fontFamily: 'JetBrainsMono', 
             fontSize: fontSize,
             fontWeight: FontWeight.w900,
-            color: finalPriceColor ?? (hasDiscount ? AppColors.primaryGreen : AppColors.textDark),
+            color: finalPriceColor ?? (hasDiscount ? AppColors.primaryGreen : (Theme.of(context).brightness == Brightness.dark ? Colors.white : AppColors.textDark)),
           ),
         ),
       ],

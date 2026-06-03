@@ -6,7 +6,7 @@ class AppStrings {
 
   // Navigation Tabs
   static const String navCalc = "CALC";
-  static const String navList = "LIST";
+  static const String navList = "SHOPPING";
   static const String navHistory = "HISTORY";
   static const String navConv = "CONV";
 
@@ -29,13 +29,13 @@ class AppStrings {
   static const String listTitle = "CART ITEMS";
   static const String listSubtotalSavings = "SUBTOTAL & SAVINGS";
   static const String listFinalTotal = "FINAL TOTAL";
-  static const String listEmpty = "List is empty";
+  static const String listEmpty = "Shopping is empty";
   static const String listItemName = "ITEM NAME";
   static const String listQty = "QTY";
   static const String listUnitType = "UNIT TYPE";
   static const String listUnitPrice = "UNIT PRICE";
   static const String listDiscount = "DISCOUNT";
-  static const String listAddToList = "Add to List";
+  static const String listAddToList = "Add to Shopping";
   static const String listUpdate = "Update Item";
   static const String listEditItem = "EDIT ITEM";
   static const String listDeleteConfirmTitle = "Are you sure to delete this item?";
@@ -128,14 +128,26 @@ class AppStrings {
   static const String summaryGet = " get ";
   static const String summaryOff = "% OFF";
   static const String summaryAppliedGlobally = "Applied globally on the final subtotal.";
-  static const String summaryReturnToList = "RETURN TO LIST";
+  static const String summaryReturnToList = "RETURN TO SHOPPING";
 
   // List Additional
   static const String listSavedToday = "Saved ₹ today";
-  static const String listEmptyMsg = "Nothing in your list for this date.";
+  static const String listEmptyMsg = "Nothing in your shopping for this date.";
   static const String listSavedBadge = "Saved ₹";
 
-  // Modal Additional
+  // Updated UI label constants
+  static const String labelMode = "Mode";
+  static const String labelMarket = "Market";
+  static const String labelCalculation = "Calculation";
+  static const String labelItemOff = "Item Off";
+  static const String labelVendorOff = "Vendor Off";
+  static const String labelOriginalPrice = "Original Price";
+  static const String labelPaidAmount = "Paid Amount";
+  static const String labelTotalSavings = "Total Savings";
+  static const String labelFlatRate = "Flat Rate";
+  static const String labelPerUnit = "Per Unit";
+  static const String labelLocalMarket = "Local Market";
+  static const String labelSuperMall = "Super Mall";
   static const String modalItemTotal = "ITEM TOTAL";
   static const String modalFinalItemTotal = "FINAL ITEM TOTAL";
   static const String modalAfterVendorDiscount = "after vendor discount";

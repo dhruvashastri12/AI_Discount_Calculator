@@ -161,6 +161,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
         ? ((savings / subtotal) * 100).round()
         : 0;
 
+    bool isDark = Theme.of(context).brightness == Brightness.dark;
     return SummaryCard(
       margin: const EdgeInsets.fromLTRB(AppDimensions.paddingL, AppDimensions.paddingM, AppDimensions.paddingL, 0),
       children: [
@@ -189,7 +190,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                         style: TextStyle(fontFamily: 'JetBrainsMono', 
                           fontSize: AppDimensions.fontTitleL,
                           fontWeight: FontWeight.w900,
-                          color: AppColors.textDark,
+                          color: isDark ? Colors.white : AppColors.textDark,
                         ),
                       ),
                       const SizedBox(width: AppDimensions.paddingXS),

@@ -46,7 +46,8 @@ class AppColors {
   static const Color navBarDark = Color(0xFF1A1A1A);
   static const Color surface = Color(0xFF1F1F1F);
   static const Color surfaceActive = Color(0xFF2D2D2D);
-  static const Color textDark = Color(0xFF1A202C);
+  static const Color textDarkPrimary = Color(0xFFB0B0B0); // Light grey for dark mode readability
+  static const Color textDark = textDarkPrimary; // Alias for legacy usage
   static const Color textLight = Color(0xFFF7FAFC);
   static const Color textMuted = Color(0xFF718096);
   static const Color accentMuted = Color(0xFFE2E8F0);
