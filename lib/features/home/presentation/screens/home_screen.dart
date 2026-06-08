@@ -6,13 +6,10 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Home'),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: const Text('Home'), centerTitle: true),
       body: Center(
         child: Text(
-          'First Sync Complete!',
+          'AIDC Home!',
           style: Theme.of(context).textTheme.headlineMedium,
         ),
       ),

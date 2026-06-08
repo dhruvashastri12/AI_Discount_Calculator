@@ -23,11 +23,12 @@ class ModalRateInput extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    print("ModalRateInput: build called, padding vertical = ${AppDimensions.paddingM}");
     bool isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.symmetric(
-        horizontal: AppDimensions.paddingS,
-        vertical: AppDimensions.paddingXS + 4,
+        horizontal: AppDimensions.paddingM,
+        vertical: AppDimensions.paddingM,
       ),
       decoration: BoxDecoration(
         color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.white,

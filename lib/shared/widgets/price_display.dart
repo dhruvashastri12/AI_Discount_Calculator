@@ -27,7 +27,8 @@ class PriceDisplay extends StatelessWidget {
         if (hasDiscount) ...[
           Text(
             '₹${originalPrice.toStringAsFixed(0)}',
-            style: TextStyle(fontFamily: 'JetBrainsMono', 
+            style: TextStyle(
+              fontFamily: 'JetBrainsMono',
               fontSize: fontSize - 1,
               color: Colors.grey,
               decoration: TextDecoration.lineThrough,
@@ -37,10 +38,17 @@ class PriceDisplay extends StatelessWidget {
         ],
         Text(
           '₹${finalPrice.toStringAsFixed(0)}',
-          style: TextStyle(fontFamily: 'JetBrainsMono', 
+          style: TextStyle(
+            fontFamily: 'JetBrainsMono',
             fontSize: fontSize,
             fontWeight: FontWeight.w900,
-            color: finalPriceColor ?? (hasDiscount ? AppColors.primaryGreen : (Theme.of(context).brightness == Brightness.dark ? Colors.white : AppColors.textDark)),
+            color:
+                finalPriceColor ??
+                (hasDiscount
+                    ? AppColors.primaryGreen
+                    : (Theme.of(context).brightness == Brightness.dark
+                          ? Colors.white
+                          : AppColors.textDark)),
           ),
         ),
       ],

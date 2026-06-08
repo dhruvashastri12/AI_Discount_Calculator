@@ -27,7 +27,10 @@ class CategoryHeader extends StatelessWidget {
             color: AppColors.categoryIconBG,
             borderRadius: BorderRadius.circular(AppDimensions.radiusM + 2),
           ),
-          child: Text(emoji, style: const TextStyle(fontSize: AppDimensions.fontTitleS)),
+          child: Text(
+            emoji,
+            style: const TextStyle(fontSize: AppDimensions.fontTitleS),
+          ),
         ),
         const SizedBox(width: AppDimensions.paddingM),
         Column(
@@ -35,17 +38,20 @@ class CategoryHeader extends StatelessWidget {
           children: [
             Text(
               title.toUpperCase(),
-              style: TextStyle(fontFamily: 'DMSans', 
+              style: TextStyle(
+                fontFamily: 'DMSans',
                 fontSize: AppDimensions.fontL,
                 fontWeight: FontWeight.w900,
                 letterSpacing: 0.5,
+                color: AppColors.navBarDark,
               ),
             ),
             Text(
               '$itemCount ${itemCount == 1 ? 'item' : 'items'}',
-              style: TextStyle(fontFamily: 'DMSans', 
+              style: TextStyle(
+                fontFamily: 'DMSans',
                 fontSize: AppDimensions.fontS,
-                color: Colors.grey,
+                color: AppColors.neutralText,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -54,10 +60,11 @@ class CategoryHeader extends StatelessWidget {
         const Spacer(),
         Text(
           '₹${subtotal.toStringAsFixed(0)}',
-          style: TextStyle(fontFamily: 'JetBrainsMono', 
+          style: TextStyle(
+            fontFamily: 'JetBrainsMono',
             fontSize: AppDimensions.fontXXL,
             fontWeight: FontWeight.w900,
-            color: AppColors.textDark,
+            color: AppColors.navBarDark,
           ),
         ),
       ],

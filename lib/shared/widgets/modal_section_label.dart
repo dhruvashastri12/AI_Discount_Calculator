@@ -14,7 +14,8 @@ class ModalSectionLabel extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: AppDimensions.paddingXS),
       child: Text(
         label.toUpperCase(),
-        style: TextStyle(fontFamily: 'DMSans', 
+        style: TextStyle(
+          fontFamily: 'DMSans',
           fontSize: AppDimensions.fontS - 1,
           fontWeight: FontWeight.w900,
           color: AppColors.neutralText,

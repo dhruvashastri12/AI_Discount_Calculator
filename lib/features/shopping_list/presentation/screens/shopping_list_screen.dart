@@ -76,7 +76,9 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text(AppStrings.dialogConfirmDelete),
-        content: const Text('\${AppStrings.dialogDeleteMsg}\n\n\${AppStrings.dialogDeleteWarning}'),
+        content: const Text(
+          '\${AppStrings.dialogDeleteMsg}\n\n\${AppStrings.dialogDeleteWarning}',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -102,7 +104,9 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
         context: context,
         builder: (context) => AlertDialog(
           title: const Text(AppStrings.dialogDeleteHistoryTitle),
-          content: const Text('${AppStrings.dialogDeleteHistoryMsg}\n\n${AppStrings.dialogDeleteWarning}'),
+          content: const Text(
+            '${AppStrings.dialogDeleteHistoryMsg}\n\n${AppStrings.dialogDeleteWarning}',
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
@@ -147,8 +151,14 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showAddModal(),
         backgroundColor: AppColors.primaryGreen,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.radiusXL)),
-        child: const Icon(Icons.add, color: AppColors.white, size: AppDimensions.iconFAB),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppDimensions.radiusXL),
+        ),
+        child: const Icon(
+          Icons.add,
+          color: AppColors.white,
+          size: AppDimensions.iconFAB,
+        ),
       ),
     );
   }
@@ -163,7 +173,12 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
 
     bool isDark = Theme.of(context).brightness == Brightness.dark;
     return SummaryCard(
-      margin: const EdgeInsets.fromLTRB(AppDimensions.paddingL, AppDimensions.paddingM, AppDimensions.paddingL, 0),
+      margin: const EdgeInsets.fromLTRB(
+        AppDimensions.paddingL,
+        AppDimensions.paddingM,
+        AppDimensions.paddingL,
+        0,
+      ),
       children: [
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -174,7 +189,8 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                 children: [
                   Text(
                     AppStrings.listSubtotalSavings,
-                    style: TextStyle(fontFamily: 'DMSans', 
+                    style: TextStyle(
+                      fontFamily: 'DMSans',
                       fontSize: AppDimensions.fontS - 1,
                       fontWeight: FontWeight.w900,
                       color: AppColors.neutralText,
@@ -187,10 +203,11 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                     children: [
                       Text(
                         '₹${subtotal.toStringAsFixed(0)}',
-                        style: TextStyle(fontFamily: 'JetBrainsMono', 
+                        style: TextStyle(
+                          fontFamily: 'JetBrainsMono',
                           fontSize: AppDimensions.fontTitleL,
                           fontWeight: FontWeight.w900,
-                          color: isDark ? Colors.white : AppColors.textDark,
+                          color: isDark ? Colors.white : AppColors.navBarDark,
                         ),
                       ),
                       const SizedBox(width: AppDimensions.paddingXS),
@@ -199,7 +216,8 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                           padding: const EdgeInsets.only(bottom: 2),
                           child: Text(
                             '-₹${savings.toStringAsFixed(0)}',
-                            style: TextStyle(fontFamily: 'JetBrainsMono', 
+                            style: TextStyle(
+                              fontFamily: 'JetBrainsMono',
                               fontSize: AppDimensions.fontL,
                               fontWeight: FontWeight.bold,
                               color: AppColors.primaryGreen,
@@ -218,7 +236,8 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
               children: [
                 Text(
                   AppStrings.listFinalTotal,
-                  style: TextStyle(fontFamily: 'DMSans', 
+                  style: TextStyle(
+                    fontFamily: 'DMSans',
                     fontSize: AppDimensions.fontS - 1,
                     fontWeight: FontWeight.w900,
                     color: AppColors.neutralText,
@@ -228,7 +247,8 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                 const SizedBox(height: 2),
                 Text(
                   '₹${finalTotal.toStringAsFixed(0)}',
-                  style: TextStyle(fontFamily: 'JetBrainsMono', 
+                  style: TextStyle(
+                    fontFamily: 'JetBrainsMono',
                     fontSize: AppDimensions.fontDisplayM,
                     fontWeight: FontWeight.w900,
                     color: AppColors.primaryGreen,
@@ -257,7 +277,11 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
           const SizedBox(height: AppDimensions.paddingL),
           Text(
             AppStrings.listEmptyMsg,
-            style: TextStyle(fontFamily: 'DMSans', fontSize: AppDimensions.fontTitleS, color: Colors.grey),
+            style: TextStyle(
+              fontFamily: 'DMSans',
+              fontSize: AppDimensions.fontTitleS,
+              color: Colors.grey,
+            ),
           ),
         ],
       ),
@@ -270,15 +294,23 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     if (currentDayItems.isEmpty) return _buildEmptyState();
 
     DateTime firstDate = currentDayItems.first.date;
-    String dateStr = DateFormat(AppStrings.formatShortDate).format(firstDate).toUpperCase();
+    String dateStr = DateFormat(
+      AppStrings.formatShortDate,
+    ).format(firstDate).toUpperCase();
 
     return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingL, vertical: AppDimensions.paddingS + 2),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppDimensions.paddingL,
+        vertical: AppDimensions.paddingS + 2,
+      ),
       itemCount: groups.length + 1,
       itemBuilder: (context, index) {
         if (index == 0) {
           return Padding(
-            padding: const EdgeInsets.only(top: AppDimensions.paddingS + 2, bottom: AppDimensions.paddingL),
+            padding: const EdgeInsets.only(
+              top: AppDimensions.paddingS + 2,
+              bottom: AppDimensions.paddingL,
+            ),
             child: Align(
               alignment: Alignment.centerLeft,
               child: Container(
@@ -292,10 +324,11 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                 ),
                 child: Text(
                   dateStr,
-                  style: TextStyle(fontFamily: 'DMSans', 
+                  style: TextStyle(
+                    fontFamily: 'DMSans',
                     fontSize: AppDimensions.fontS,
                     fontWeight: FontWeight.w900,
-                    color: Colors.grey[600],
+                    color: AppColors.neutralText,
                     letterSpacing: 0.5,
                   ),
                 ),

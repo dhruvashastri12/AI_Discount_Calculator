@@ -44,6 +44,38 @@ class CategorySelector extends StatefulWidget {
 class _CategorySelectorState extends State<CategorySelector> {
   final LayerLink _moreLink = LayerLink();
   bool _isMoreOpen = false;
+  late FocusNode _customFocusNode;
+
+  @override
+  void initState() {
+    super.initState();
+    _customFocusNode = FocusNode();
+    _customFocusNode.addListener(_onFocusChange);
+  }
+
+  @override
+  void dispose() {
+    _customFocusNode.removeListener(_onFocusChange);
+    _customFocusNode.dispose();
+    super.dispose();
+  }
+
+  void _onFocusChange() {
+    print("CategorySelector: custom focus change, hasFocus = ${_customFocusNode.hasFocus}");
+    if (_customFocusNode.hasFocus) {
+      Future.delayed(const Duration(milliseconds: 300), () {
+        if (mounted) {
+          print("CategorySelector: calling Scrollable.ensureVisible");
+          Scrollable.ensureVisible(
+            context,
+            alignment: 0.0,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+          );
+        }
+      });
+    }
+  }
 
   final List<Map<String, String>> _quickCats = [
     {'name': 'DAIRY', 'emoji': '🥛'},
@@ -183,6 +215,7 @@ class _CategorySelectorState extends State<CategorySelector> {
           const SizedBox(width: 8),
           Expanded(
             child: TextField(
+              focusNode: _customFocusNode,
               style: TextStyle(fontFamily: 'DMSans', fontSize: 13, fontWeight: FontWeight.w500, color: isDark ? Colors.white : AppColors.textDark),
               decoration: InputDecoration(
                 hintText: 'Type custom name...',
@@ -208,28 +241,42 @@ class _CategorySelectorState extends State<CategorySelector> {
     bool isQuickSelected = _quickCats.any((cat) => cat['name'] == widget.selectedCategory);
     bool isMoreSelected = !isQuickSelected && widget.selectedCategory.isNotEmpty;
 
-    return Center(
-      child: Wrap(
-        spacing: 8,
-        runSpacing: 8,
-        alignment: WrapAlignment.center,
-        children: [
-          ..._quickCats.map((cat) => _buildChip(
-                name: cat['name']!,
-                emoji: cat['emoji']!,
-                isSelected: widget.selectedCategory == cat['name'],
-                onTap: () => widget.onCategorySelected(cat['name']!, cat['emoji']!),
-              )),
-          CompositedTransformTarget(
-            link: _moreLink,
-            child: _buildMoreChip(
-              isSelected: isMoreSelected,
-              isOpen: _isMoreOpen,
-              onTap: _toggleMore,
-            ),
+    final List<Widget> chips = [];
+    for (var cat in _quickCats) {
+      chips.add(
+        Expanded(
+          child: _buildChip(
+            name: cat['name']!,
+            emoji: cat['emoji']!,
+            isSelected: widget.selectedCategory == cat['name'],
+            onTap: () => widget.onCategorySelected(cat['name']!, cat['emoji']!),
           ),
-        ],
+        ),
+      );
+    }
+    chips.add(
+      Expanded(
+        child: CompositedTransformTarget(
+          link: _moreLink,
+          child: _buildMoreChip(
+            isSelected: isMoreSelected,
+            isOpen: _isMoreOpen,
+            onTap: _toggleMore,
+          ),
+        ),
       ),
+    );
+
+    final List<Widget> rowChildren = [];
+    for (int i = 0; i < chips.length; i++) {
+      rowChildren.add(chips[i]);
+      if (i < chips.length - 1) {
+        rowChildren.add(const SizedBox(width: 8));
+      }
+    }
+
+    return Row(
+      children: rowChildren,
     );
   }
 
@@ -244,7 +291,6 @@ class _CategorySelectorState extends State<CategorySelector> {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 65,
         height: 65,
         decoration: BoxDecoration(
           color: isSelected ? AppColors.greenTint : (isDark ? Colors.white.withValues(alpha: 0.05) : AppColors.neutralChip),
@@ -291,7 +337,6 @@ class _CategorySelectorState extends State<CategorySelector> {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 65,
         height: 65,
         decoration: BoxDecoration(
           color: bgColor,
