@@ -32,15 +32,12 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       valueListenable: themeNotifier,
       builder: (context, currentMode, _) {
         bool isDark = Theme.of(context).brightness == Brightness.dark;
-        
+
         return Scaffold(
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           appBar: _buildAppBar(isDark),
           resizeToAvoidBottomInset: false,
-          body: IndexedStack(
-            index: _selectedIndex,
-            children: _screens,
-          ),
+          body: IndexedStack(index: _selectedIndex, children: _screens),
           bottomNavigationBar: _buildBottomNavBar(isDark),
         );
       },
@@ -55,10 +52,11 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       automaticallyImplyLeading: false,
       title: Text(
         AppStrings.calcTitle,
-        style: TextStyle(fontFamily: 'JetBrainsMono', 
+        style: TextStyle(
+          fontFamily: 'JetBrainsMono',
           fontSize: AppDimensions.fontTitleS,
           fontWeight: FontWeight.w900,
-          color: isDark ? Colors.white : AppColors.textDark,
+          color: isDark ? Colors.white : AppColors.navBarDark,
           letterSpacing: 1,
         ),
       ),
@@ -86,11 +84,11 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.05),
             blurRadius: 10,
             offset: const Offset(0, -2),
-          )
+          ),
         ],
       ),
       padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).padding.bottom + AppDimensions.paddingS, 
+        bottom: MediaQuery.of(context).padding.bottom + AppDimensions.paddingS,
         top: AppDimensions.paddingM + 2,
       ),
       child: Row(
@@ -108,7 +106,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   Widget _navItem(IconData icon, String label, int index, bool isDark) {
     bool isActive = _selectedIndex == index;
     Color activeColor = AppColors.primaryGreen;
-    
+
     return GestureDetector(
       onTap: () => setState(() => _selectedIndex = index),
       behavior: HitTestBehavior.opaque,
@@ -125,7 +123,8 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             const SizedBox(height: 4),
             Text(
               label,
-              style: TextStyle(fontFamily: 'DMSans', 
+              style: TextStyle(
+                fontFamily: 'DMSans',
                 fontSize: 9,
                 fontWeight: FontWeight.w900,
                 color: isActive ? activeColor : AppColors.neutralText,

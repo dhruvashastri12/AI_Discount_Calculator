@@ -23,12 +23,14 @@ class ModalRateInput extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    print("ModalRateInput: build called, padding vertical = ${AppDimensions.paddingM}");
+    print(
+      "ModalRateInput: build called, padding vertical = ${AppDimensions.paddingM}",
+    );
     bool isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.symmetric(
-        horizontal: AppDimensions.paddingM,
-        vertical: AppDimensions.paddingM,
+        horizontal: AppDimensions.paddingS,
+        vertical: AppDimensions.paddingS,
       ),
       decoration: BoxDecoration(
         color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.white,
@@ -40,7 +42,8 @@ class ModalRateInput extends StatelessWidget {
           if (prefix != null)
             Text(
               prefix!,
-              style: TextStyle(fontFamily: 'JetBrainsMono', 
+              style: TextStyle(
+                fontFamily: 'JetBrainsMono',
                 fontSize: fontSize,
                 fontWeight: FontWeight.w700,
               ),
@@ -50,14 +53,22 @@ class ModalRateInput extends StatelessWidget {
               controller: controller,
               keyboardType: TextInputType.number,
               style: isMono
-                  ? TextStyle(fontFamily: 'JetBrainsMono', fontSize: fontSize, fontWeight: FontWeight.w700)
-                  : TextStyle(fontFamily: 'DMSans', fontSize: fontSize, fontWeight: FontWeight.w500),
+                  ? TextStyle(
+                      fontFamily: 'JetBrainsMono',
+                      fontSize: fontSize,
+                      fontWeight: FontWeight.w700,
+                    )
+                  : TextStyle(
+                      fontFamily: 'DMSans',
+                      fontSize: fontSize,
+                      fontWeight: FontWeight.w500,
+                    ),
               onChanged: onChanged,
               decoration: InputDecoration(
                 hintText: hint,
                 border: InputBorder.none,
                 isDense: true,
-                contentPadding: EdgeInsets.zero,
+                contentPadding: EdgeInsets.all(5),
               ),
             ),
           ),

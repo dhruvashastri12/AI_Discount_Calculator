@@ -40,10 +40,10 @@ class CategoryHeader extends StatelessWidget {
               title.toUpperCase(),
               style: TextStyle(
                 fontFamily: 'DMSans',
-                fontSize: AppDimensions.fontL,
+                fontSize: AppDimensions.fontXXL,
                 fontWeight: FontWeight.w900,
                 letterSpacing: 0.5,
-                color: AppColors.navBarDark,
+                color: AppColors.textMuted,
               ),
             ),
             Text(

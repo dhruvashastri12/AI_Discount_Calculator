@@ -12,7 +12,9 @@ class ConversionScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     // Determine theme brightness for proper styling
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
-    final Color bgColor = isDark ? AppColors.background : AppColors.backgroundLight;
+    final Color bgColor = isDark
+        ? AppColors.backgroundDark
+        : AppColors.backgroundLight;
 
     return Scaffold(
       backgroundColor: bgColor,
@@ -34,7 +36,7 @@ class ConversionScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: AppConstants.spaceXXL),
-            
+
             // Major notice text
             Text(
               AppStrings.convComingSoon,
@@ -42,15 +44,18 @@ class ConversionScreen extends StatelessWidget {
                 fontFamily: 'DMSans',
                 fontSize: AppConstants.fontSizeXXL + 2,
                 fontWeight: FontWeight.bold,
-                color: isDark ? AppColors.white : AppColors.textDark,
+                color: isDark ? AppColors.textDark : AppColors.textDark,
               ),
             ),
             const SizedBox(height: AppConstants.spaceS),
-            
+
             // Encouraging flavor text
             const Text(
               AppStrings.convFlavorText,
-              style: TextStyle(color: AppColors.textMuted, fontSize: AppConstants.fontSizeM),
+              style: TextStyle(
+                color: AppColors.textMuted,
+                fontSize: AppConstants.fontSizeM,
+              ),
             ),
           ],
         ),
@@ -58,4 +63,3 @@ class ConversionScreen extends StatelessWidget {
     );
   }
 }
-
