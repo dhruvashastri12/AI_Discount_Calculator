@@ -98,7 +98,18 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final history = dataService.historyByDate;
+    final today = DateTime.now();
+    final todayDate = DateTime(today.year, today.month, today.day);
+    final rawHistory = dataService.historyByDate;
+
+    // Filter to show only sessions dated strictly before today
+    final Map<DateTime, List<CartItem>> history = {};
+    rawHistory.forEach((date, items) {
+      if (date.isBefore(todayDate)) {
+        history[date] = items;
+      }
+    });
+
     bool isDark = Theme.of(context).brightness == Brightness.dark;
 
     Map<String, Map<DateTime, List<CartItem>>> monthlyHistory = {};
@@ -432,6 +443,23 @@ class _HistoryScreenState extends State<HistoryScreen> {
     double daySavings = items.fold(0.0, (sum, it) => sum + it.totalSavings);
     bool isDark = Theme.of(context).brightness == Brightness.dark;
 
+    final categories = items
+        .map((it) => it.categoryId)
+        .where((c) => c.trim().isNotEmpty)
+        .toSet()
+        .toList();
+    String categoriesText = "";
+    if (categories.isNotEmpty) {
+      final displayCats = categories.take(3).map((c) {
+        if (c.isEmpty) return "";
+        return c[0].toUpperCase() + c.substring(1).toLowerCase();
+      }).toList();
+      categoriesText = displayCats.join(" + ");
+      if (categories.length > 3) {
+        categoriesText += " + more";
+      }
+    }
+
     return Container(
       margin: const EdgeInsets.only(bottom: AppDimensions.paddingM),
       decoration: BoxDecoration(
@@ -488,13 +516,25 @@ class _HistoryScreenState extends State<HistoryScreen> {
                                 : AppColors.navBarDark,
                           ),
                         ),
+                        if (categoriesText.isNotEmpty) ...[
+                          const SizedBox(height: 4),
+                          Text(
+                            categoriesText,
+                            style: TextStyle(
+                              fontFamily: 'DMSans',
+                              fontSize: AppDimensions.fontXS,
+                              fontWeight: FontWeight.w500,
+                              color: AppColors.neutralText,
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      if (daySavings > 0)
+                      if (daySavings.round() > 0)
                         Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: AppDimensions.paddingM,
@@ -507,7 +547,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                             ),
                           ),
                           child: Text(
-                            'Saved ₹${daySavings.toStringAsFixed(0)}',
+                            'Saved ₹ ${daySavings.toStringAsFixed(0)}',
                             style: TextStyle(
                               fontFamily: 'DMSans',
                               fontSize: AppDimensions.fontXS,
@@ -531,7 +571,12 @@ class _HistoryScreenState extends State<HistoryScreen> {
             ),
           ),
           if (isExpanded) ...[
-            const Divider(height: 1, indent: 20, endIndent: 20),
+            const Divider(
+              height: 1,
+              indent: 20,
+              endIndent: 20,
+              color: AppColors.borderDefault,
+            ),
             ...items.map(
               (it) => ItemCard(
                 item: it,
@@ -542,7 +587,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 ),
                 onEdit: () => _showEditModal(it),
                 onDelete: () => _showDeleteConfirmation(it),
-                showDate: true,
+                showDate: false,
               ),
             ),
           ],

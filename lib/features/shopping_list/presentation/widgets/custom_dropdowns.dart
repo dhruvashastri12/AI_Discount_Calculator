@@ -9,7 +9,11 @@ class DropdownManager {
 
   static bool get isAnyOpen => _currentEntry != null;
 
-  static void show(BuildContext context, OverlayEntry entry, {VoidCallback? onDismiss}) {
+  static void show(
+    BuildContext context,
+    OverlayEntry entry, {
+    VoidCallback? onDismiss,
+  }) {
     dismiss();
     FocusManager.instance.primaryFocus?.unfocus(); // Close keyboard
     _currentEntry = entry;
@@ -61,7 +65,9 @@ class _CategorySelectorState extends State<CategorySelector> {
   }
 
   void _onFocusChange() {
-    print("CategorySelector: custom focus change, hasFocus = ${_customFocusNode.hasFocus}");
+    print(
+      "CategorySelector: custom focus change, hasFocus = ${_customFocusNode.hasFocus}",
+    );
     if (_customFocusNode.hasFocus) {
       Future.delayed(const Duration(milliseconds: 300), () {
         if (mounted) {
@@ -128,19 +134,24 @@ class _CategorySelectorState extends State<CategorySelector> {
                   decoration: BoxDecoration(
                     color: Theme.of(context).cardColor,
                     borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: AppColors.borderDefault, width: 0.5),
+                    border: Border.all(
+                      color: AppColors.borderDefault,
+                      width: 0.5,
+                    ),
                     boxShadow: const [
                       BoxShadow(
                         color: Color(0x1F000000),
                         blurRadius: 28,
                         offset: Offset(0, 8),
-                      )
+                      ),
                     ],
                   ),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      ..._moreOptions.map((opt) => _buildMoreRow(opt['name']!, opt['emoji']!)),
+                      ..._moreOptions.map(
+                        (opt) => _buildMoreRow(opt['name']!, opt['emoji']!),
+                      ),
                       const SizedBox(height: 6),
                       const Divider(height: 1, color: AppColors.borderDefault),
                       const SizedBox(height: 6),
@@ -154,9 +165,13 @@ class _CategorySelectorState extends State<CategorySelector> {
         ),
       );
 
-      DropdownManager.show(context, entry, onDismiss: () {
-        if (mounted) setState(() => _isMoreOpen = false);
-      });
+      DropdownManager.show(
+        context,
+        entry,
+        onDismiss: () {
+          if (mounted) setState(() => _isMoreOpen = false);
+        },
+      );
       setState(() => _isMoreOpen = true);
     }
   }
@@ -164,7 +179,7 @@ class _CategorySelectorState extends State<CategorySelector> {
   Widget _buildMoreRow(String name, String emoji) {
     bool isSelected = widget.selectedCategory == name;
     bool isDark = Theme.of(context).brightness == Brightness.dark;
-    
+
     return InkWell(
       onTap: () {
         widget.onCategorySelected(name, emoji);
@@ -181,10 +196,11 @@ class _CategorySelectorState extends State<CategorySelector> {
             Expanded(
               child: Text(
                 name,
-                style: TextStyle(fontFamily: 'DMSans', 
+                style: TextStyle(
+                  fontFamily: 'DMSans',
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: isDark ? Colors.white : AppColors.textDark,
+                  color: isDark ? Colors.white : AppColors.neutralText,
                 ),
               ),
             ),
@@ -192,7 +208,10 @@ class _CategorySelectorState extends State<CategorySelector> {
               Container(
                 width: 16,
                 height: 16,
-                decoration: const BoxDecoration(color: AppColors.primaryGreen, shape: BoxShape.circle),
+                decoration: const BoxDecoration(
+                  color: AppColors.primaryGreen,
+                  shape: BoxShape.circle,
+                ),
                 child: const Icon(Icons.check, color: Colors.white, size: 10),
               ),
           ],
@@ -206,7 +225,9 @@ class _CategorySelectorState extends State<CategorySelector> {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 11),
       decoration: BoxDecoration(
-        color: isDark ? Colors.white.withValues(alpha: 0.05) : AppColors.neutralChip,
+        color: isDark
+            ? Colors.white.withValues(alpha: 0.05)
+            : AppColors.neutralChip,
         borderRadius: BorderRadius.circular(9),
       ),
       child: Row(
@@ -216,10 +237,19 @@ class _CategorySelectorState extends State<CategorySelector> {
           Expanded(
             child: TextField(
               focusNode: _customFocusNode,
-              style: TextStyle(fontFamily: 'DMSans', fontSize: 13, fontWeight: FontWeight.w500, color: isDark ? Colors.white : AppColors.textDark),
+              style: TextStyle(
+                fontFamily: 'DMSans',
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: isDark ? Colors.white : AppColors.textDark,
+              ),
               decoration: InputDecoration(
                 hintText: 'Type custom name...',
-                hintStyle: TextStyle(fontFamily: 'DMSans', color: AppColors.neutralText.withValues(alpha: 0.6), fontSize: 13),
+                hintStyle: TextStyle(
+                  fontFamily: 'DMSans',
+                  color: AppColors.neutralText.withValues(alpha: 0.6),
+                  fontSize: 13,
+                ),
                 border: InputBorder.none,
                 isDense: true,
               ),
@@ -238,8 +268,11 @@ class _CategorySelectorState extends State<CategorySelector> {
 
   @override
   Widget build(BuildContext context) {
-    bool isQuickSelected = _quickCats.any((cat) => cat['name'] == widget.selectedCategory);
-    bool isMoreSelected = !isQuickSelected && widget.selectedCategory.isNotEmpty;
+    bool isQuickSelected = _quickCats.any(
+      (cat) => cat['name'] == widget.selectedCategory,
+    );
+    bool isMoreSelected =
+        !isQuickSelected && widget.selectedCategory.isNotEmpty;
 
     final List<Widget> chips = [];
     for (var cat in _quickCats) {
@@ -275,9 +308,7 @@ class _CategorySelectorState extends State<CategorySelector> {
       }
     }
 
-    return Row(
-      children: rowChildren,
-    );
+    return Row(children: rowChildren);
   }
 
   Widget _buildChip({
@@ -287,13 +318,17 @@ class _CategorySelectorState extends State<CategorySelector> {
     required VoidCallback onTap,
   }) {
     bool isDark = Theme.of(context).brightness == Brightness.dark;
-    
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
         height: 65,
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.greenTint : (isDark ? Colors.white.withValues(alpha: 0.05) : AppColors.neutralChip),
+          color: isSelected
+              ? AppColors.greenTint
+              : (isDark
+                    ? Colors.white.withValues(alpha: 0.05)
+                    : AppColors.neutralChip),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isSelected ? AppColors.darkGreen : Colors.transparent,
@@ -308,7 +343,8 @@ class _CategorySelectorState extends State<CategorySelector> {
             Text(
               name.split(' ').first,
               textAlign: TextAlign.center,
-              style: TextStyle(fontFamily: 'DMSans', 
+              style: TextStyle(
+                fontFamily: 'DMSans',
                 fontSize: 8,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 0.2,
@@ -330,9 +366,17 @@ class _CategorySelectorState extends State<CategorySelector> {
     String label = isSelected ? widget.selectedCategory.toUpperCase() : 'MORE';
     String topIcon = isSelected ? _getEmoji(widget.selectedCategory) : '···';
 
-    Color contentColor = (isSelected || isOpen) ? AppColors.darkGreen : AppColors.neutralText;
-    Color bgColor = (isSelected || isOpen) ? AppColors.greenTint : (isDark ? Colors.white.withValues(alpha: 0.05) : AppColors.neutralChip);
-    Color borderColor = (isSelected || isOpen) ? AppColors.darkGreen : Colors.transparent;
+    Color contentColor = (isSelected || isOpen)
+        ? AppColors.darkGreen
+        : AppColors.neutralText;
+    Color bgColor = (isSelected || isOpen)
+        ? AppColors.greenTint
+        : (isDark
+              ? Colors.white.withValues(alpha: 0.05)
+              : AppColors.neutralChip);
+    Color borderColor = (isSelected || isOpen)
+        ? AppColors.darkGreen
+        : Colors.transparent;
 
     return GestureDetector(
       onTap: onTap,
@@ -360,7 +404,8 @@ class _CategorySelectorState extends State<CategorySelector> {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.center,
-              style: TextStyle(fontFamily: 'DMSans', 
+              style: TextStyle(
+                fontFamily: 'DMSans',
                 fontSize: 8,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 0.2,
@@ -397,7 +442,19 @@ class _UnitPickerPillState extends State<UnitPickerPill> {
   bool _isOpen = false;
 
   final List<String> _units = [
-    'pcs', 'g', 'kg', 'ml', 'ltr', 'tin', 'dzn', 'pair', 'pkt', 'mtr', 'ft', 'cm', 'galn'
+    'pcs',
+    'g',
+    'kg',
+    'ml',
+    'ltr',
+    'tin',
+    'dzn',
+    'pair',
+    'pkt',
+    'mtr',
+    'ft',
+    'cm',
+    'galn',
   ];
 
   void _togglePopup() {
@@ -426,13 +483,16 @@ class _UnitPickerPillState extends State<UnitPickerPill> {
                   decoration: BoxDecoration(
                     color: Theme.of(context).cardColor,
                     borderRadius: BorderRadius.circular(13),
-                    border: Border.all(color: AppColors.borderDefault, width: 0.5),
+                    border: Border.all(
+                      color: AppColors.borderDefault,
+                      width: 0.5,
+                    ),
                     boxShadow: const [
                       BoxShadow(
                         color: Color(0x1F000000),
                         blurRadius: 28,
                         offset: Offset(0, 8),
-                      )
+                      ),
                     ],
                   ),
                   child: Column(
@@ -443,10 +503,12 @@ class _UnitPickerPillState extends State<UnitPickerPill> {
                       const Divider(height: 1, color: AppColors.borderDefault),
                       const SizedBox(height: 6),
                       Text(
-                        widget.isGreen
-                            ? "Vendor's unit"
-                            : "Your unit",
-                        style: TextStyle(fontFamily: 'DMSans', fontSize: 10, color: AppColors.neutralText),
+                        widget.isGreen ? "Vendor's unit" : "Your unit",
+                        style: TextStyle(
+                          fontFamily: 'DMSans',
+                          fontSize: 10,
+                          color: AppColors.neutralText,
+                        ),
                         textAlign: TextAlign.center,
                       ),
                     ],
@@ -458,9 +520,13 @@ class _UnitPickerPillState extends State<UnitPickerPill> {
         ),
       );
 
-      DropdownManager.show(context, entry, onDismiss: () {
-        if (mounted) setState(() => _isOpen = false);
-      });
+      DropdownManager.show(
+        context,
+        entry,
+        onDismiss: () {
+          if (mounted) setState(() => _isOpen = false);
+        },
+      );
       setState(() => _isOpen = true);
     }
   }
@@ -480,8 +546,10 @@ class _UnitPickerPillState extends State<UnitPickerPill> {
   Widget _buildUnitOption(String u) {
     bool isSelected = widget.unit == u;
     bool isDark = Theme.of(context).brightness == Brightness.dark;
-    
-    Color bgColor = isDark ? Colors.white.withValues(alpha: 0.05) : AppColors.neutralChip;
+
+    Color bgColor = isDark
+        ? Colors.white.withValues(alpha: 0.05)
+        : AppColors.neutralChip;
     Color borderColor = Colors.transparent;
     Color textColor = AppColors.neutralText;
 
@@ -511,7 +579,8 @@ class _UnitPickerPillState extends State<UnitPickerPill> {
         ),
         child: Text(
           u,
-          style: TextStyle(fontFamily: 'JetBrainsMono', 
+          style: TextStyle(
+            fontFamily: 'JetBrainsMono',
             fontSize: 11,
             fontWeight: FontWeight.w700,
             color: textColor,
@@ -524,7 +593,9 @@ class _UnitPickerPillState extends State<UnitPickerPill> {
   @override
   Widget build(BuildContext context) {
     Color bgColor = widget.isGreen ? AppColors.greenTint : AppColors.blueTint;
-    Color borderColor = widget.isGreen ? AppColors.darkGreen : AppColors.blueBorder;
+    Color borderColor = widget.isGreen
+        ? AppColors.darkGreen
+        : AppColors.blueBorder;
     Color textColor = widget.isGreen ? AppColors.darkGreen : AppColors.blueText;
 
     if (widget.isError) {
@@ -549,7 +620,8 @@ class _UnitPickerPillState extends State<UnitPickerPill> {
             children: [
               Text(
                 widget.unit,
-                style: TextStyle(fontFamily: 'JetBrainsMono', 
+                style: TextStyle(
+                  fontFamily: 'JetBrainsMono',
                   fontSize: 11,
                   fontWeight: FontWeight.w800,
                   color: textColor,

@@ -77,7 +77,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       builder: (context) => AlertDialog(
         title: const Text(AppStrings.dialogConfirmDelete),
         content: const Text(
-          '\${AppStrings.dialogDeleteMsg}\n\n\${AppStrings.dialogDeleteWarning}',
+          "${AppStrings.dialogDeleteMsg}\n\n${AppStrings.dialogDeleteWarning}",
         ),
         actions: [
           TextButton(

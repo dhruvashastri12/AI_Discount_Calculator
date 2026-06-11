@@ -255,7 +255,8 @@ class _AddItemModalState extends State<AddItemModal> {
               widget.editItem != null
                   ? AppStrings.modalEditItem
                   : AppStrings.modalAddItem,
-              style: TextStyle(fontFamily: 'JetBrainsMono', 
+              style: TextStyle(
+                fontFamily: 'JetBrainsMono',
                 fontSize: AppDimensions.fontTitleS,
                 fontWeight: FontWeight.bold,
                 color: AppColors.primaryGreen,
@@ -359,28 +360,31 @@ class _AddItemModalState extends State<AddItemModal> {
 
   Widget _buildTextInput(TextEditingController controller, String hint) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingL),
       decoration: BoxDecoration(
         color: Colors.transparent,
         borderRadius: BorderRadius.circular(AppDimensions.radiusL),
-        border: Border.all(color: AppColors.primaryGreen, width: 1.5),
+        border: Border.all(color: AppColors.primaryGreen, width: 1),
       ),
       child: TextField(
         controller: controller,
-        style: TextStyle(fontFamily: 'DMSans', 
-          fontSize: AppDimensions.fontM,
+        style: TextStyle(
+          fontFamily: 'DMSans',
+          color: AppColors.navBarDark,
+          fontSize: AppDimensions.fontTitleS,
           fontWeight: FontWeight.w500,
         ),
         onChanged: (_) => setState(() {}),
         decoration: InputDecoration(
           hintText: hint,
-          hintStyle: TextStyle(fontFamily: 'DMSans', 
+          hintStyle: TextStyle(
+            fontFamily: 'DMSans',
             color: AppColors.neutralText.withValues(alpha: 0.4),
           ),
           border: InputBorder.none,
           isDense: true,
           contentPadding: const EdgeInsets.symmetric(
-            vertical: AppDimensions.paddingL,
+            vertical: AppDimensions.paddingM,
+            horizontal: AppDimensions.paddingS,
           ),
         ),
       ),
@@ -404,7 +408,7 @@ class _AddItemModalState extends State<AddItemModal> {
               child: ModalRateInput(
                 controller: _flatAmountController,
                 hint: AppStrings.historyTotal,
-                prefix: '₹',
+                prefix: '₹ ',
                 onChanged: (_) => setState(() {}),
               ),
             ),
@@ -458,7 +462,8 @@ class _AddItemModalState extends State<AddItemModal> {
         ),
         child: Text(
           u,
-          style: TextStyle(fontFamily: 'JetBrainsMono', 
+          style: TextStyle(
+            fontFamily: 'JetBrainsMono',
             fontSize: AppDimensions.fontS,
             fontWeight: FontWeight.w700,
             color: isSelected ? AppColors.blueText : AppColors.neutralText,
@@ -487,7 +492,8 @@ class _AddItemModalState extends State<AddItemModal> {
               children: [
                 Text(
                   '₹',
-                  style: TextStyle(fontFamily: 'JetBrainsMono', 
+                  style: TextStyle(
+                    fontFamily: 'JetBrainsMono',
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
                     color: AppColors.neutralText,
@@ -505,7 +511,8 @@ class _AddItemModalState extends State<AddItemModal> {
                 const SizedBox(width: 8),
                 Text(
                   AppStrings.modalPer,
-                  style: TextStyle(fontFamily: 'DMSans', 
+                  style: TextStyle(
+                    fontFamily: 'DMSans',
                     fontSize: 10,
                     color: AppColors.neutralText,
                   ),
@@ -568,7 +575,8 @@ class _AddItemModalState extends State<AddItemModal> {
       children: [
         Text(
           label,
-          style: TextStyle(fontFamily: 'DMSans', 
+          style: TextStyle(
+            fontFamily: 'DMSans',
             fontSize: 8,
             fontWeight: FontWeight.w700,
             letterSpacing: 1.2,
@@ -600,7 +608,8 @@ class _AddItemModalState extends State<AddItemModal> {
           Expanded(
             child: Text(
               '$_selectedBaseUnit and $_selectedBoughtUnit are different families.',
-              style: TextStyle(fontFamily: 'DMSans', 
+              style: TextStyle(
+                fontFamily: 'DMSans',
                 fontSize: AppDimensions.fontXS,
                 fontWeight: FontWeight.w600,
                 color: AppColors.warningText,
@@ -677,7 +686,8 @@ class _AddItemModalState extends State<AddItemModal> {
         children: [
           Text(
             AppStrings.modalVendorOff,
-            style: TextStyle(fontFamily: 'DMSans', 
+            style: TextStyle(
+              fontFamily: 'DMSans',
               color: AppColors.vendorOffLabel,
               fontSize: 10,
               fontWeight: FontWeight.bold,
@@ -747,7 +757,8 @@ class _AddItemModalState extends State<AddItemModal> {
             widget.editItem != null
                 ? AppStrings.modalBtnUpdate
                 : AppStrings.modalBtnAdd,
-            style: TextStyle(fontFamily: 'DMSans', 
+            style: TextStyle(
+              fontFamily: 'DMSans',
               color: Colors.white,
               fontSize: AppDimensions.fontM + 1,
               fontWeight: FontWeight.bold,

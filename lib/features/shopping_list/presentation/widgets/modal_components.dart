@@ -23,28 +23,58 @@ class MarketSelector extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: isDark ? Colors.white.withValues(alpha: 0.05) : AppColors.neutralChip,
+        color: isDark
+            ? Colors.white.withValues(alpha: 0.05)
+            : AppColors.neutralChip,
         borderRadius: BorderRadius.circular(AppDimensions.radiusL),
       ),
       child: Row(
         children: [
-          Expanded(child: _buildMarketOption(context, AppStrings.modalLocalMarket, '🏘️', !isMall)),
-          Expanded(child: _buildMarketOption(context, AppStrings.modalSuperMall, '🏢', isMall)),
+          Expanded(
+            child: _buildMarketOption(
+              context,
+              AppStrings.modalLocalMarket,
+              '🏘️',
+              !isMall,
+            ),
+          ),
+          Expanded(
+            child: _buildMarketOption(
+              context,
+              AppStrings.modalSuperMall,
+              '🏢',
+              isMall,
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildMarketOption(BuildContext context, String label, String icon, bool active) {
+  Widget _buildMarketOption(
+    BuildContext context,
+    String label,
+    String icon,
+    bool active,
+  ) {
     bool isDark = Theme.of(context).brightness == Brightness.dark;
     return GestureDetector(
       onTap: () => onMarketChanged(label.contains('Local') ? 'Local' : 'Mall'),
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: AppDimensions.paddingS),
         decoration: BoxDecoration(
-          color: active ? (isDark ? AppColors.darkGreen : Colors.white) : Colors.transparent,
+          color: active
+              ? (isDark ? AppColors.darkGreen : Colors.white)
+              : Colors.transparent,
           borderRadius: BorderRadius.circular(AppDimensions.radiusM),
-          boxShadow: active && !isDark ? [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 4)] : null,
+          boxShadow: active && !isDark
+              ? [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.05),
+                    blurRadius: 4,
+                  ),
+                ]
+              : null,
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -53,10 +83,13 @@ class MarketSelector extends StatelessWidget {
             const SizedBox(width: AppDimensions.paddingXS),
             Text(
               label,
-              style: TextStyle(fontFamily: 'DMSans', 
+              style: TextStyle(
+                fontFamily: 'DMSans',
                 fontSize: AppDimensions.fontS,
                 fontWeight: FontWeight.bold,
-                color: active ? (isDark ? Colors.white : AppColors.textDark) : AppColors.neutralText,
+                color: active
+                    ? (isDark ? Colors.white : AppColors.neutralText)
+                    : AppColors.neutralText,
               ),
             ),
           ],
@@ -82,19 +115,43 @@ class PriceModeToggle extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: isDark ? Colors.white.withValues(alpha: 0.05) : AppColors.neutralChip,
+        color: isDark
+            ? Colors.white.withValues(alpha: 0.05)
+            : AppColors.neutralChip,
         borderRadius: BorderRadius.circular(AppDimensions.radiusL),
       ),
       child: Row(
         children: [
-          Expanded(child: _buildToggleButton(context, PriceMode.flatRate, '💰', AppStrings.modalFlatRate, AppStrings.modalTotalAmount)),
-          Expanded(child: _buildToggleButton(context, PriceMode.perUnit, '📐', AppStrings.modalPerUnit, AppStrings.modalRatePerUnit)),
+          Expanded(
+            child: _buildToggleButton(
+              context,
+              PriceMode.flatRate,
+              '💰',
+              AppStrings.modalFlatRate,
+              AppStrings.modalTotalAmount,
+            ),
+          ),
+          Expanded(
+            child: _buildToggleButton(
+              context,
+              PriceMode.perUnit,
+              '📐',
+              AppStrings.modalPerUnit,
+              AppStrings.modalRatePerUnit,
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildToggleButton(BuildContext context, PriceMode mode, String icon, String title, String hint) {
+  Widget _buildToggleButton(
+    BuildContext context,
+    PriceMode mode,
+    String icon,
+    String title,
+    String hint,
+  ) {
     bool isSelected = priceMode == mode;
     bool isDark = Theme.of(context).brightness == Brightness.dark;
     return GestureDetector(
@@ -103,9 +160,13 @@ class PriceModeToggle extends StatelessWidget {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(vertical: AppDimensions.paddingS),
         decoration: BoxDecoration(
-          color: isSelected ? (isDark ? AppColors.darkGreen : Colors.white) : Colors.transparent,
+          color: isSelected
+              ? (isDark ? AppColors.darkGreen : Colors.white)
+              : Colors.transparent,
           borderRadius: BorderRadius.circular(AppDimensions.radiusM),
-          boxShadow: isSelected && !isDark ? [const BoxShadow(color: Color(0x0D000000), blurRadius: 4)] : null,
+          boxShadow: isSelected && !isDark
+              ? [const BoxShadow(color: Color(0x0D000000), blurRadius: 4)]
+              : null,
         ),
         child: Opacity(
           opacity: isSelected ? 1.0 : 0.5,
@@ -118,13 +179,21 @@ class PriceModeToggle extends StatelessWidget {
                   const SizedBox(width: 4),
                   Text(
                     title,
-                    style: TextStyle(fontFamily: 'DMSans', fontWeight: FontWeight.bold, fontSize: AppDimensions.fontS),
+                    style: TextStyle(
+                      fontFamily: 'DMSans',
+                      fontWeight: FontWeight.bold,
+                      fontSize: AppDimensions.fontS,
+                    ),
                   ),
                 ],
               ),
               Text(
                 hint,
-                style: TextStyle(fontFamily: 'DMSans', fontSize: AppDimensions.fontXS, color: AppColors.neutralText),
+                style: TextStyle(
+                  fontFamily: 'DMSans',
+                  fontSize: AppDimensions.fontXS,
+                  color: AppColors.neutralText,
+                ),
               ),
             ],
           ),

@@ -48,7 +48,7 @@ class PriceDisplay extends StatelessWidget {
                     ? AppColors.primaryGreen
                     : (Theme.of(context).brightness == Brightness.dark
                           ? Colors.white
-                          : AppColors.textDark)),
+                          : AppColors.neutralText)),
           ),
         ),
       ],
