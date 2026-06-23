@@ -4,6 +4,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/services/data_service.dart';
+import '../../../../core/models/cart_item.dart';
 
 class DaySummaryScreen extends StatefulWidget {
   final DateTime? date;
@@ -297,8 +298,8 @@ class _DaySummaryScreenState extends State<DaySummaryScreen> {
     );
   }
 
-  Widget _buildCategoryRow(String name, List<dynamic> items, bool isDark) {
-    double catTotal = items.fold(0.0, (sum, it) => sum + (it.itemAfterVendorDiscount as num).toDouble());
+  Widget _buildCategoryRow(String name, List<CartItem> items, bool isDark) {
+    double catTotal = dataService.getCategoryTotal(name, items);
     
     return Container(
       margin: const EdgeInsets.only(bottom: AppDimensions.paddingS),

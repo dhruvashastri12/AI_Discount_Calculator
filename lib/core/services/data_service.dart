@@ -15,8 +15,14 @@ class DataService extends ChangeNotifier {
   double _storeThreshold = 0;
   double _storePercentage = 0;
 
+  Map<String, double> _categoryRoundOffValues = {};
+  Map<String, DiscountType> _categoryRoundOffTypes = {};
+
   double get storeThreshold => _storeThreshold;
   double get storePercentage => _storePercentage;
+
+  double getCategoryRoundOffValue(String categoryId) => _categoryRoundOffValues[categoryId] ?? 0.0;
+  DiscountType getCategoryRoundOffType(String categoryId) => _categoryRoundOffTypes[categoryId] ?? DiscountType.flat;
 
   Future<void> init() async {
     final prefs = await SharedPreferences.getInstance();
@@ -28,6 +34,26 @@ class DataService extends ChangeNotifier {
     _storeThreshold = prefs.getDouble('storeThreshold') ?? 0;
     _storePercentage = prefs.getDouble('storePercentage') ?? 0;
 
+    final roundOffValuesStr = prefs.getString('categoryRoundOffValues') ?? '{}';
+    final roundOffTypesStr = prefs.getString('categoryRoundOffTypes') ?? '{}';
+    
+    try {
+      final Map<String, dynamic> decodedValues = jsonDecode(roundOffValuesStr);
+      _categoryRoundOffValues = decodedValues.map((k, v) => MapEntry(k, (v as num).toDouble()));
+    } catch (_) {
+      _categoryRoundOffValues = {};
+    }
+
+    try {
+      final Map<String, dynamic> decodedTypes = jsonDecode(roundOffTypesStr);
+      _categoryRoundOffTypes = decodedTypes.map((k, v) => MapEntry(
+        k, 
+        DiscountType.values.firstWhere((e) => e.name == v, orElse: () => DiscountType.flat)
+      ));
+    } catch (_) {
+      _categoryRoundOffTypes = {};
+    }
+
     notifyListeners();
   }
 
@@ -36,8 +62,39 @@ class DataService extends ChangeNotifier {
     _allItems.clear();
     _storeThreshold = 0;
     _storePercentage = 0;
+    _categoryRoundOffValues.clear();
+    _categoryRoundOffTypes.clear();
     _saveAll();
     notifyListeners();
+  }
+
+  Future<void> setCategoryRoundOff(String categoryId, double value, DiscountType type) async {
+    _categoryRoundOffValues[categoryId] = value;
+    _categoryRoundOffTypes[categoryId] = type;
+    
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('categoryRoundOffValues', jsonEncode(_categoryRoundOffValues));
+    await prefs.setString('categoryRoundOffTypes', jsonEncode(_categoryRoundOffTypes.map((k, v) => MapEntry(k, v.name))));
+    notifyListeners();
+  }
+
+  double getCategoryTotal(String categoryId, List<CartItem> items) {
+    double catSubtotal = items.fold(0.0, (sum, it) => sum + it.itemAfterVendorDiscount);
+    if (items.length > 1) {
+      double val = getCategoryRoundOffValue(categoryId);
+      DiscountType type = getCategoryRoundOffType(categoryId);
+      double discount = 0;
+      if (val > 0) {
+        if (type == DiscountType.percentage) {
+          discount = catSubtotal * (val / 100);
+        } else {
+          discount = val;
+        }
+        discount = discount.clamp(0, catSubtotal);
+      }
+      return catSubtotal - discount;
+    }
+    return catSubtotal;
   }
 
   /// Returns items for the most recent date that has entries, or empty list.
@@ -80,13 +137,16 @@ class DataService extends ChangeNotifier {
 
   double get subtotal => currentItems.fold(0, (sum, it) => sum + it.subtotal);
   
-  double get totalSavings {
-    double itemSavings = currentItems.fold(0, (sum, it) => sum + (it.subtotal - it.itemFinalPrice));
-    double vendorSavings = currentItems.fold(0, (sum, it) => sum + it.vendorDiscountAmount);
-    return itemSavings + vendorSavings + storeDiscountAmount;
-  }
+  double get totalSavings => subtotal - finalTotalValue;
 
-  double get totalBeforeStoreOffer => currentItems.fold(0, (sum, it) => sum + it.itemAfterVendorDiscount);
+  double get totalBeforeStoreOffer {
+    double total = 0;
+    final groups = groupItemsByCategory(currentItems);
+    for (var entry in groups.entries) {
+      total += getCategoryTotal(entry.key, entry.value);
+    }
+    return total;
+  }
 
   double get storeDiscountAmount {
     if (_storeThreshold > 0 && totalBeforeStoreOffer >= _storeThreshold) {

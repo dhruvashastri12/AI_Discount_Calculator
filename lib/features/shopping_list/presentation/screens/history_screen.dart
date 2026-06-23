@@ -9,6 +9,9 @@ import '../../../../core/services/data_service.dart';
 import '../widgets/item_card.dart';
 import '../widgets/add_item_modal.dart';
 import '../../../../shared/widgets/dashed_border_container.dart';
+import '../../../../shared/widgets/modal_rate_input.dart';
+import '../../../../shared/widgets/discount_type_toggle.dart';
+import '../../../../shared/widgets/category_header.dart';
 
 class HistoryScreen extends StatefulWidget {
   const HistoryScreen({super.key});
@@ -22,6 +25,11 @@ class _HistoryScreenState extends State<HistoryScreen> {
   final Set<String> _expandedDays = {};
   String? _expandedItemId;
 
+  final Set<String> _visibleRoundOffCategories = {};
+  final Set<String> _categoriesInEditMode = {};
+  final Map<String, TextEditingController> _roundOffControllers = {};
+  final Map<String, DiscountType> _roundOffTypes = {};
+
   @override
   void initState() {
     super.initState();
@@ -33,11 +41,32 @@ class _HistoryScreenState extends State<HistoryScreen> {
   @override
   void dispose() {
     dataService.removeListener(_updateUI);
+    for (var controller in _roundOffControllers.values) {
+      controller.dispose();
+    }
     super.dispose();
   }
 
   void _updateUI() {
     if (mounted) setState(() {});
+  }
+
+  bool _isRoundOffVisible(String categoryId) {
+    final savedVal = dataService.getCategoryRoundOffValue(categoryId);
+    if (savedVal > 0 && !_visibleRoundOffCategories.contains(categoryId)) {
+      _roundOffControllers.putIfAbsent(
+        categoryId,
+        () => TextEditingController(
+          text: savedVal.toString().replaceAll(RegExp(r'\.0$'), ''),
+        ),
+      );
+      _roundOffTypes.putIfAbsent(
+        categoryId,
+        () => dataService.getCategoryRoundOffType(categoryId),
+      );
+      _visibleRoundOffCategories.add(categoryId);
+    }
+    return _visibleRoundOffCategories.contains(categoryId);
   }
 
   void _showEditModal(CartItem item) {
@@ -96,6 +125,21 @@ class _HistoryScreenState extends State<HistoryScreen> {
     }
   }
 
+  double _computeDayTotal(List<CartItem> items) {
+    final groups = dataService.groupItemsByCategory(items);
+    double total = 0;
+    for (var entry in groups.entries) {
+      total += dataService.getCategoryTotal(entry.key, entry.value);
+    }
+    return total;
+  }
+
+  double _computeDaySavings(List<CartItem> items) {
+    double rawSubtotal = items.fold(0.0, (sum, it) => sum + it.subtotal);
+    double dayTotal = _computeDayTotal(items);
+    return (rawSubtotal - dayTotal).clamp(0, double.infinity);
+  }
+
   @override
   Widget build(BuildContext context) {
     final today = DateTime.now();
@@ -149,10 +193,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
     double historyExpense = 0;
     double historySavings = 0;
     history.forEach((date, items) {
-      for (var item in items) {
-        historyExpense += item.itemAfterVendorDiscount;
-        historySavings += item.totalSavings;
-      }
+      historyExpense += _computeDayTotal(items);
+      historySavings += _computeDaySavings(items);
     });
 
     return Container(
@@ -254,10 +296,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
     double monthSavings = 0;
 
     days.forEach((date, items) {
-      for (var item in items) {
-        monthTotal += item.itemAfterVendorDiscount;
-        monthSavings += item.totalSavings;
-      }
+      monthTotal += _computeDayTotal(items);
+      monthSavings += _computeDaySavings(items);
     });
 
     final parts = monthKey.split('-');
@@ -446,11 +486,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
   Widget _buildDayCard(DateTime date, List<CartItem> items) {
     String dayKey = DateFormat('yyyy-MM-dd').format(date);
     bool isExpanded = _expandedDays.contains(dayKey);
-    double dayTotal = items.fold(
-      0.0,
-      (sum, it) => sum + it.itemAfterVendorDiscount,
-    );
-    double daySavings = items.fold(0.0, (sum, it) => sum + it.totalSavings);
+    double dayTotal = _computeDayTotal(items);
+    double daySavings = _computeDaySavings(items);
     bool isDark = Theme.of(context).brightness == Brightness.dark;
 
     final categories = items
@@ -469,6 +506,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
         categoriesText += " + more";
       }
     }
+
+    final groups = dataService.groupItemsByCategory(items);
 
     return Container(
       margin: const EdgeInsets.only(bottom: AppDimensions.paddingM),
@@ -587,22 +626,230 @@ class _HistoryScreenState extends State<HistoryScreen> {
               endIndent: 20,
               color: AppColors.borderDefault,
             ),
-            ...items.map(
-              (it) => ItemCard(
-                item: it,
-                isExpanded: _expandedItemId == it.id,
-                onToggle: () => setState(
-                  () =>
-                      _expandedItemId = _expandedItemId == it.id ? null : it.id,
-                ),
-                onEdit: () => _showEditModal(it),
-                onDelete: () => _showDeleteConfirmation(it),
-                showDate: false,
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppDimensions.paddingL,
+                vertical: AppDimensions.paddingS,
+              ),
+              child: Column(
+                children: groups.entries.expand((entry) {
+                  final categoryId = entry.key;
+                  final catItems = entry.value;
+                  return [
+                    CategoryHeader(
+                      emoji: _getEmojiForCategory(categoryId),
+                      title: categoryId,
+                      itemCount: catItems.length,
+                      subtotal: dataService.getCategoryTotal(categoryId, catItems),
+                      showRoundOffIcon: catItems.length > 1,
+                      onRoundOffTap: () {
+                        setState(() {
+                          if (_visibleRoundOffCategories.contains(categoryId)) {
+                            _visibleRoundOffCategories.remove(categoryId);
+                          } else {
+                            _visibleRoundOffCategories.add(categoryId);
+                            final savedVal = dataService.getCategoryRoundOffValue(categoryId);
+                            if (savedVal > 0) {
+                              _categoriesInEditMode.remove(categoryId);
+                            } else {
+                              _categoriesInEditMode.add(categoryId);
+                            }
+                            final controller = _roundOffControllers.putIfAbsent(
+                              categoryId,
+                              () => TextEditingController(
+                                text: savedVal > 0 ? savedVal.toString().replaceAll(RegExp(r'\.0$'), '') : ''
+                              )
+                            );
+                            controller.text = savedVal > 0 ? savedVal.toString().replaceAll(RegExp(r'\.0$'), '') : '';
+                            _roundOffTypes.putIfAbsent(
+                              categoryId,
+                              () => dataService.getCategoryRoundOffType(categoryId)
+                            );
+                          }
+                        });
+                      },
+                    ),
+                    const SizedBox(height: AppDimensions.paddingS),
+                    if (_isRoundOffVisible(categoryId)) ...[
+                      _buildRoundOffDiscountSection(categoryId, catItems),
+                      const SizedBox(height: AppDimensions.paddingS),
+                    ],
+                    ...catItems.map(
+                      (it) => ItemCard(
+                        item: it,
+                        isExpanded: _expandedItemId == it.id,
+                        onToggle: () => setState(
+                          () =>
+                              _expandedItemId = _expandedItemId == it.id ? null : it.id,
+                        ),
+                        onEdit: () => _showEditModal(it),
+                        onDelete: () => _showDeleteConfirmation(it),
+                        showDate: false,
+                      ),
+                    ),
+                    const SizedBox(height: AppDimensions.paddingM),
+                  ];
+                }).toList(),
               ),
             ),
           ],
         ],
       ),
     );
+  }
+
+  Widget _buildRoundOffDiscountSection(String categoryId, List<CartItem> items) {
+    bool isDark = Theme.of(context).brightness == Brightness.dark;
+    bool inEditMode = _categoriesInEditMode.contains(categoryId);
+    final type = _roundOffTypes[categoryId] ?? DiscountType.flat;
+    final controller = _roundOffControllers[categoryId] ?? TextEditingController();
+
+    if (inEditMode) {
+      return Container(
+        padding: const EdgeInsets.all(AppDimensions.paddingM),
+        decoration: BoxDecoration(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.05)
+              : AppColors.vendorOffBG,
+          borderRadius: BorderRadius.circular(AppDimensions.radiusM),
+          border: Border.all(
+            color: AppColors.vendorOffBorder,
+            style: BorderStyle.solid,
+          ),
+        ),
+        child: Row(
+          children: [
+            const Text(
+              'Round off discount',
+              style: TextStyle(
+                fontFamily: 'DMSans',
+                color: AppColors.vendorOffLabel,
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: ModalRateInput(
+                controller: controller,
+                hint: '0',
+                fontSize: 13,
+                onChanged: (_) {},
+              ),
+            ),
+            const SizedBox(width: 8),
+            DiscountTypeToggle(
+              selected: type,
+              onSelected: (val) {
+                setState(() {
+                  _roundOffTypes[categoryId] = val;
+                });
+              },
+            ),
+            const SizedBox(width: 8),
+            IconButton(
+              icon: const Icon(Icons.check_circle, color: Colors.green),
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(),
+              onPressed: () {
+                final text = controller.text.trim();
+                if (text.isEmpty) {
+                  dataService.setCategoryRoundOff(categoryId, 0, type);
+                  setState(() {
+                    _categoriesInEditMode.remove(categoryId);
+                    _visibleRoundOffCategories.remove(categoryId);
+                  });
+                  return;
+                }
+                final val = double.tryParse(text);
+                if (val == null || val <= 0 || val > 10) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Round off discount must be above 0 and maximum 10.'),
+                      backgroundColor: AppColors.error,
+                    ),
+                  );
+                  return;
+                }
+                dataService.setCategoryRoundOff(categoryId, val, type);
+                setState(() {
+                  _categoriesInEditMode.remove(categoryId);
+                });
+              },
+            ),
+          ],
+        ),
+      );
+    } else {
+      final savedVal = dataService.getCategoryRoundOffValue(categoryId);
+      final displayVal = savedVal.toString().replaceAll(RegExp(r'\.0$'), '');
+      return GestureDetector(
+        onTap: () {
+          setState(() {
+            _categoriesInEditMode.add(categoryId);
+          });
+        },
+        child: Container(
+          padding: const EdgeInsets.all(AppDimensions.paddingM),
+          decoration: BoxDecoration(
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.05)
+                : AppColors.vendorOffBG,
+            borderRadius: BorderRadius.circular(AppDimensions.radiusM),
+            border: Border.all(
+              color: AppColors.vendorOffBorder,
+              style: BorderStyle.solid,
+            ),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Round off discount',
+                style: TextStyle(
+                  fontFamily: 'DMSans',
+                  color: AppColors.vendorOffLabel,
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              Row(
+                children: [
+                  Text(
+                    type == DiscountType.percentage ? '$displayVal%' : '₹$displayVal',
+                    style: TextStyle(
+                      fontFamily: 'JetBrainsMono',
+                      color: AppColors.vendorOffLabel,
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Icon(
+                    Icons.edit,
+                    size: 14,
+                    color: AppColors.vendorOffLabel.withValues(alpha: 0.6),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+  }
+
+  String _getEmojiForCategory(String name) {
+    String n = name.toUpperCase();
+    if (n.contains('VEG')) return '🥦';
+    if (n.contains('DAIRY')) return '🥛';
+    if (n.contains('GROCERY')) return '🛒';
+    if (n.contains('HOUSEHOLD') || n.contains('HOME')) return '🏠';
+    if (n.contains('CLOTH')) return '👗';
+    if (n.contains('STATIO')) return '✏️';
+    if (n.contains('ELECTRO')) return '📱';
+    if (n.contains('HEALTH')) return '💊';
+    if (n.contains('BEAUTY')) return '💄';
+    return '🏷️';
   }
 }

@@ -8,6 +8,8 @@ class CategoryHeader extends StatelessWidget {
   final String title;
   final int itemCount;
   final double subtotal;
+  final VoidCallback? onRoundOffTap;
+  final bool showRoundOffIcon;
 
   const CategoryHeader({
     super.key,
@@ -15,6 +17,8 @@ class CategoryHeader extends StatelessWidget {
     required this.title,
     required this.itemCount,
     required this.subtotal,
+    this.onRoundOffTap,
+    this.showRoundOffIcon = false,
   });
 
   @override
@@ -58,6 +62,24 @@ class CategoryHeader extends StatelessWidget {
           ],
         ),
         const Spacer(),
+        if (showRoundOffIcon) ...[
+          GestureDetector(
+            onTap: onRoundOffTap,
+            child: Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: AppColors.greenTint,
+                borderRadius: BorderRadius.circular(AppDimensions.radiusM),
+              ),
+              child: const Icon(
+                Icons.discount_outlined,
+                size: AppDimensions.iconS,
+                color: AppColors.greenText,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+        ],
         Text(
           '₹${subtotal.toStringAsFixed(0)}',
           style: TextStyle(
