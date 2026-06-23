@@ -329,6 +329,11 @@ class _DaySummaryScreenState extends State<DaySummaryScreen> {
     if (n.contains('DAIRY')) return '🥛';
     if (n.contains('GROCERY')) return '🛒';
     if (n.contains('HOUSEHOLD') || n.contains('HOME')) return '🏠';
+    if (n.contains('CLOTH')) return '👗';
+    if (n.contains('STATIO')) return '✏️';
+    if (n.contains('ELECTRO')) return '📱';
+    if (n.contains('HEALTH')) return '💊';
+    if (n.contains('BEAUTY')) return '💄';
     return '🏷️';
   }
 

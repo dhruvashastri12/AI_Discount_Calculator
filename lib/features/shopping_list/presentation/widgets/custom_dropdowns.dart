@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../../../core/constants/app_colors.dart';
 
@@ -46,269 +47,210 @@ class CategorySelector extends StatefulWidget {
 }
 
 class _CategorySelectorState extends State<CategorySelector> {
-  final LayerLink _moreLink = LayerLink();
-  bool _isMoreOpen = false;
-  late FocusNode _customFocusNode;
+  static const Set<String> _predefinedNames = {
+    'DAIRY',
+    'VEGGIES',
+    'GROCERY',
+    'HEALTH',
+    'STATIONARY',
+    'STATIONERY',
+    'ELECTRONICS',
+    'CLOTHING',
+    'BEAUTY',
+  };
 
-  @override
-  void initState() {
-    super.initState();
-    _customFocusNode = FocusNode();
-    _customFocusNode.addListener(_onFocusChange);
-  }
+  void _showCustomCategoryDialog() {
+    String selectedUpper = widget.selectedCategory.toUpperCase();
+    bool isCustomSelected =
+        widget.selectedCategory.isNotEmpty &&
+        !_predefinedNames.contains(selectedUpper);
 
-  @override
-  void dispose() {
-    _customFocusNode.removeListener(_onFocusChange);
-    _customFocusNode.dispose();
-    super.dispose();
-  }
-
-  void _onFocusChange() {
-    print(
-      "CategorySelector: custom focus change, hasFocus = ${_customFocusNode.hasFocus}",
+    final TextEditingController dialogController = TextEditingController(
+      text: isCustomSelected ? widget.selectedCategory : '',
     );
-    if (_customFocusNode.hasFocus) {
-      Future.delayed(const Duration(milliseconds: 300), () {
-        if (mounted) {
-          print("CategorySelector: calling Scrollable.ensureVisible");
-          Scrollable.ensureVisible(
-            context,
-            alignment: 0.0,
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeInOut,
-          );
-        }
-      });
-    }
-  }
 
-  final List<Map<String, String>> _quickCats = [
-    {'name': 'DAIRY', 'emoji': '🥛'},
-    {'name': 'VEGGIES & FRUITS', 'emoji': '🥦'},
-    {'name': 'GROCERY', 'emoji': '🛒'},
-    {'name': 'HOUSEHOLD', 'emoji': '🏠'},
-  ];
-
-  final List<Map<String, String>> _moreOptions = [
-    {'name': 'Clothing', 'emoji': '👗'},
-    {'name': 'Stationery', 'emoji': '✏️'},
-    {'name': 'Electronics', 'emoji': '📱'},
-    {'name': 'Health', 'emoji': '💊'},
-    {'name': 'Beauty', 'emoji': '💄'},
-  ];
-
-  String _getEmoji(String name) {
-    for (var cat in _quickCats) {
-      if (cat['name'] == name) return cat['emoji']!;
-    }
-    for (var cat in _moreOptions) {
-      if (cat['name'] == name) return cat['emoji']!;
-    }
-    return '🏷️';
-  }
-
-  void _toggleMore() {
-    if (_isMoreOpen) {
-      DropdownManager.dismiss();
-    } else {
-      final entry = OverlayEntry(
-        builder: (context) => Stack(
-          children: [
-            GestureDetector(
-              onTap: DropdownManager.dismiss,
-              behavior: HitTestBehavior.translucent,
-              child: Container(color: Colors.transparent),
-            ),
-            CompositedTransformFollower(
-              link: _moreLink,
-              showWhenUnlinked: false,
-              targetAnchor: Alignment.bottomRight,
-              followerAnchor: Alignment.topRight,
-              offset: const Offset(0, 8),
-              child: Material(
-                color: Colors.transparent,
-                child: Container(
-                  width: 200,
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).cardColor,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                      color: AppColors.borderDefault,
-                      width: 0.5,
-                    ),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Color(0x1F000000),
-                        blurRadius: 28,
-                        offset: Offset(0, 8),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      ..._moreOptions.map(
-                        (opt) => _buildMoreRow(opt['name']!, opt['emoji']!),
-                      ),
-                      const SizedBox(height: 6),
-                      const Divider(height: 1, color: AppColors.borderDefault),
-                      const SizedBox(height: 6),
-                      _buildCustomInputRow(),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      );
-
-      DropdownManager.show(
-        context,
-        entry,
-        onDismiss: () {
-          if (mounted) setState(() => _isMoreOpen = false);
-        },
-      );
-      setState(() => _isMoreOpen = true);
-    }
-  }
-
-  Widget _buildMoreRow(String name, String emoji) {
-    bool isSelected = widget.selectedCategory == name;
-    bool isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return InkWell(
-      onTap: () {
-        widget.onCategorySelected(name, emoji);
-        DropdownManager.dismiss();
-      },
-      borderRadius: BorderRadius.circular(9),
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 11),
-        decoration: BoxDecoration(borderRadius: BorderRadius.circular(9)),
-        child: Row(
-          children: [
-            Text(emoji, style: const TextStyle(fontSize: 16)),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                name,
-                style: TextStyle(
-                  fontFamily: 'DMSans',
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: isDark ? Colors.white : AppColors.neutralText,
-                ),
-              ),
-            ),
-            if (isSelected)
-              Container(
-                width: 16,
-                height: 16,
-                decoration: const BoxDecoration(
-                  color: AppColors.primaryGreen,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.check, color: Colors.white, size: 10),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCustomInputRow() {
-    bool isDark = Theme.of(context).brightness == Brightness.dark;
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 11),
-      decoration: BoxDecoration(
-        color: isDark
-            ? Colors.white.withValues(alpha: 0.05)
-            : AppColors.neutralChip,
-        borderRadius: BorderRadius.circular(9),
-      ),
-      child: Row(
-        children: [
-          const Text('✏️', style: TextStyle(fontSize: 14)),
-          const SizedBox(width: 8),
-          Expanded(
-            child: TextField(
-              focusNode: _customFocusNode,
-              style: TextStyle(
-                fontFamily: 'DMSans',
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-                color: isDark ? Colors.white : AppColors.textDark,
-              ),
-              decoration: InputDecoration(
-                hintText: 'Type custom name...',
-                hintStyle: TextStyle(
-                  fontFamily: 'DMSans',
-                  color: AppColors.neutralText.withValues(alpha: 0.6),
-                  fontSize: 13,
-                ),
-                border: InputBorder.none,
-                isDense: true,
-              ),
-              onSubmitted: (val) {
-                if (val.trim().isNotEmpty) {
-                  widget.onCategorySelected(val.trim().toUpperCase(), '🏷️');
-                  DropdownManager.dismiss();
-                }
-              },
+    showDialog(
+      context: context,
+      builder: (context) {
+        bool isDark = Theme.of(context).brightness == Brightness.dark;
+        return AlertDialog(
+          backgroundColor: isDark ? AppColors.backgroundDark : Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Text(
+            'Custom Category',
+            style: TextStyle(
+              fontFamily: 'DMSans',
+              fontWeight: FontWeight.bold,
+              fontSize: 18,
+              color: isDark ? Colors.white : AppColors.navBarDark,
             ),
           ),
-        ],
-      ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Enter category name (max 10 chars)',
+                style: TextStyle(
+                  fontFamily: 'DMSans',
+                  fontSize: 12,
+                  color: AppColors.neutralText,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Container(
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.05)
+                      : AppColors.neutralChip,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.primaryGreen, width: 1),
+                ),
+                // padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: TextField(
+                  controller: dialogController,
+                  autofocus: true,
+                  maxLength: 10,
+                  maxLengthEnforcement: MaxLengthEnforcement.enforced,
+                  style: TextStyle(
+                    fontFamily: 'DMSans',
+                    fontSize: 14,
+                    color: isDark ? Colors.white : AppColors.navBarDark,
+                  ),
+                  decoration: const InputDecoration(
+                    counterText: '', // Hide default counter text
+                    hintText: 'e.g. Pets, Gifts...',
+                  ),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(
+                'Cancel',
+                style: TextStyle(
+                  fontFamily: 'DMSans',
+                  color: isDark ? Colors.white60 : Colors.grey[600],
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                final text = dialogController.text.trim();
+                if (text.isNotEmpty) {
+                  widget.onCategorySelected(text.toUpperCase(), '🏷️');
+                }
+                Navigator.pop(context);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primaryGreen,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                elevation: 0,
+              ),
+              child: const Text(
+                'Save',
+                style: TextStyle(
+                  fontFamily: 'DMSans',
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    bool isQuickSelected = _quickCats.any(
-      (cat) => cat['name'] == widget.selectedCategory,
-    );
-    bool isMoreSelected =
-        !isQuickSelected && widget.selectedCategory.isNotEmpty;
+    String selectedUpper = widget.selectedCategory.toUpperCase();
+    bool isCustomSelected =
+        widget.selectedCategory.isNotEmpty &&
+        !_predefinedNames.contains(selectedUpper);
 
-    final List<Widget> chips = [];
-    for (var cat in _quickCats) {
-      chips.add(
+    final List<Map<String, String>> row1Cats = [
+      {'name': 'DAIRY', 'emoji': '🥛'},
+      {'name': 'VEGGIES', 'emoji': '🥦'},
+      {'name': 'GROCERY', 'emoji': '🛒'},
+      {'name': 'HEALTH', 'emoji': '💊'},
+      {'name': 'STATIONARY', 'emoji': '✏️'},
+    ];
+
+    final List<Map<String, String>> row2Cats = [
+      {'name': 'ELECTRONICS', 'emoji': '📱'},
+      {'name': 'CLOTHING', 'emoji': '👗'},
+      {'name': 'BEAUTY', 'emoji': '💄'},
+    ];
+
+    List<Widget> row1Widgets = [];
+    for (int i = 0; i < row1Cats.length; i++) {
+      var cat = row1Cats[i];
+      String name = cat['name']!;
+      String emoji = cat['emoji']!;
+      bool isSelected = selectedUpper == name;
+      row1Widgets.add(
         Expanded(
           child: _buildChip(
-            name: cat['name']!,
-            emoji: cat['emoji']!,
-            isSelected: widget.selectedCategory == cat['name'],
-            onTap: () => widget.onCategorySelected(cat['name']!, cat['emoji']!),
+            name: name,
+            emoji: emoji,
+            isSelected: isSelected,
+            onTap: () => widget.onCategorySelected(name, emoji),
           ),
         ),
       );
+      if (i < row1Cats.length - 1) {
+        row1Widgets.add(const SizedBox(width: 8));
+      }
     }
-    chips.add(
-      Expanded(
-        child: CompositedTransformTarget(
-          link: _moreLink,
-          child: _buildMoreChip(
-            isSelected: isMoreSelected,
-            isOpen: _isMoreOpen,
-            onTap: _toggleMore,
+
+    List<Widget> row2Widgets = [];
+    for (int i = 0; i < row2Cats.length; i++) {
+      var cat = row2Cats[i];
+      String name = cat['name']!;
+      String emoji = cat['emoji']!;
+      bool isSelected = selectedUpper == name;
+      row2Widgets.add(
+        Expanded(
+          child: _buildChip(
+            name: name,
+            emoji: emoji,
+            isSelected: isSelected,
+            onTap: () => widget.onCategorySelected(name, emoji),
           ),
+        ),
+      );
+      row2Widgets.add(const SizedBox(width: 8));
+    }
+
+    row2Widgets.add(
+      Expanded(
+        child: _buildCustomChip(
+          isSelected: isCustomSelected,
+          customValue: isCustomSelected ? widget.selectedCategory : 'Custom',
+          onTap: _showCustomCategoryDialog,
         ),
       ),
     );
 
-    final List<Widget> rowChildren = [];
-    for (int i = 0; i < chips.length; i++) {
-      rowChildren.add(chips[i]);
-      if (i < chips.length - 1) {
-        rowChildren.add(const SizedBox(width: 8));
-      }
-    }
+    row2Widgets.add(const SizedBox(width: 8));
+    row2Widgets.add(const Expanded(child: SizedBox()));
 
-    return Row(children: rowChildren);
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Row(children: row1Widgets),
+        const SizedBox(height: 8),
+        Row(children: row2Widgets),
+      ],
+    );
   }
 
   Widget _buildChip({
@@ -341,7 +283,7 @@ class _CategorySelectorState extends State<CategorySelector> {
             Text(emoji, style: const TextStyle(fontSize: 22)),
             const SizedBox(height: 2),
             Text(
-              name.split(' ').first,
+              name,
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontFamily: 'DMSans',
@@ -357,59 +299,52 @@ class _CategorySelectorState extends State<CategorySelector> {
     );
   }
 
-  Widget _buildMoreChip({
+  Widget _buildCustomChip({
     required bool isSelected,
-    required bool isOpen,
+    required String customValue,
     required VoidCallback onTap,
   }) {
     bool isDark = Theme.of(context).brightness == Brightness.dark;
-    String label = isSelected ? widget.selectedCategory.toUpperCase() : 'MORE';
-    String topIcon = isSelected ? _getEmoji(widget.selectedCategory) : '···';
-
-    Color contentColor = (isSelected || isOpen)
-        ? AppColors.darkGreen
-        : AppColors.neutralText;
-    Color bgColor = (isSelected || isOpen)
-        ? AppColors.greenTint
-        : (isDark
-              ? Colors.white.withValues(alpha: 0.05)
-              : AppColors.neutralChip);
-    Color borderColor = (isSelected || isOpen)
-        ? AppColors.darkGreen
-        : Colors.transparent;
+    String displayLabel = customValue.toUpperCase();
+    String emoji = isSelected ? '🏷️' : '✏️';
 
     return GestureDetector(
       onTap: onTap,
       child: Container(
         height: 65,
         decoration: BoxDecoration(
-          color: bgColor,
+          color: isSelected
+              ? AppColors.greenTint
+              : (isDark
+                    ? Colors.white.withValues(alpha: 0.05)
+                    : AppColors.neutralChip),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: borderColor, width: 1.5),
+          border: Border.all(
+            color: isSelected ? AppColors.darkGreen : Colors.transparent,
+            width: 1.5,
+          ),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(
-              topIcon,
-              style: TextStyle(
-                fontSize: isSelected ? 22 : 20,
-                fontWeight: FontWeight.w700,
-                color: contentColor,
-              ),
-            ),
+            Text(emoji, style: const TextStyle(fontSize: 22)),
             const SizedBox(height: 2),
-            Text(
-              label.split(' ').first,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontFamily: 'DMSans',
-                fontSize: 8,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 0.2,
-                color: contentColor,
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 5),
+              child: Text(
+                displayLabel,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontFamily: 'DMSans',
+                  fontSize: 8,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.2,
+                  color: isSelected
+                      ? AppColors.darkGreen
+                      : AppColors.neutralText,
+                ),
               ),
             ),
           ],
